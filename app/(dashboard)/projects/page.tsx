@@ -81,14 +81,22 @@ export default function ProjectsPage() {
 
     // Note: Edit and Delete are not fully implemented with API yet as per user request (only GET/POST specified)
     // We will keep the UI handlers but they might not persist to backend properly without endpoints.
-    const handleOpenEdit = (project: Project) => {
+    const handleOpenEdit = async (project: Project) => {
         setCurrentProject(project);
-        setFormData({
-            name: project.name,
-            description: project.description,
-            userIds: project.assignedUsers.map(u => u.id),
-        });
-        setIsEditOpen(true);
+
+        try {
+            const response = await api.get(`/projects/${project.id}`);
+            const fullProject = response.data;
+            setCurrentProject(fullProject);
+            setFormData({
+                name: fullProject.name,
+                description: fullProject.description,
+                userIds: fullProject.assignedUsers.map((u: User) => u.id),
+            });
+            setIsEditOpen(true);
+        } catch (error) {
+            console.error("Failed to fetch project details", error);
+        }
     };
 
     const toggleTeamMember = (userId: string) => {
@@ -124,18 +132,49 @@ export default function ProjectsPage() {
     };
 
     // Placeholder for Edit - Just updates local state for now or logs error
+    // Placeholder for Edit - Just updates local state for now or logs error
     const handleEditSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Implement API call if endpoint exists, e.g., PUT /projects/:id
-        console.log("Edit not implemented on backend yet");
-        setIsEditOpen(false);
+        if (!currentProject) return;
+
+        try {
+            const response = await api.put(`/projects/${currentProject.id}`, {
+                name: formData.name,
+                description: formData.description,
+                userIds: formData.userIds
+            });
+
+            // Update local state
+            setProjects(projects.map(p => p.id === currentProject.id ? response.data : p));
+            setIsEditOpen(false);
+            resetForm();
+        } catch (error) {
+            console.error("Failed to update project", error);
+        }
     };
 
-    // Placeholder for Delete
-    const handleDelete = async (id: string) => {
-        // Implement API call if endpoint exists, e.g., DELETE /projects/:id
-        // Optimistic delete
-        setProjects(projects.filter(p => p.id !== id));
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+
+    // ... (rest of the state)
+
+    // ... (fetchData, resetForm, handleOpenCreate, handleOpenEdit, toggleTeamMember, handleCreateSubmit, handleEditSubmit)
+
+    // Trigger confirmation modal
+    const handleDelete = (id: string) => {
+        setDeleteId(id);
+    };
+
+    // Confirm and execute delete based on deleteId state
+    const confirmDelete = async () => {
+        if (!deleteId) return;
+
+        try {
+            await api.delete(`/projects/${deleteId}`);
+            setProjects(projects.filter(p => p.id !== deleteId));
+            setDeleteId(null);
+        } catch (error) {
+            console.error("Failed to delete project", error);
+        }
     };
 
     const UserAvatar = ({ user }: { user: User }) => {
@@ -225,7 +264,7 @@ export default function ProjectsPage() {
                                         onClick={() => handleOpenEdit(project)}
                                         className="btn btn-ghost btn-sm btn-square tooltip"
                                         data-tip="Edit"
-                                        disabled={true /* Disable until implemented */}
+
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-base-content/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -397,6 +436,22 @@ export default function ProjectsPage() {
                     </div>
                     <form method="dialog" className="modal-backdrop">
                         <button onClick={() => setIsEditOpen(false)}>close</button>
+                    </form>
+                </dialog>
+            )}
+            {/* Delete Confirmation Modal */}
+            {deleteId && (
+                <dialog className="modal modal-open">
+                    <div className="modal-box bg-base-100">
+                        <h3 className="font-bold text-lg text-error">Confirm Delete</h3>
+                        <p className="py-4">Are you sure you want to delete this project? This action cannot be undone.</p>
+                        <div className="modal-action">
+                            <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
+                            <button className="btn btn-error text-white" onClick={confirmDelete}>Delete</button>
+                        </div>
+                    </div>
+                    <form method="dialog" className="modal-backdrop">
+                        <button onClick={() => setDeleteId(null)}>close</button>
                     </form>
                 </dialog>
             )}
