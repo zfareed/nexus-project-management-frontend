@@ -9,7 +9,10 @@ import {
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    Cell
+    Cell,
+    PieChart,
+    Pie,
+    Legend
 } from 'recharts';
 
 // Mock Data for Chart
@@ -20,42 +23,10 @@ const data = [
     { name: 'Done', value: 1, color: '#10b981' },       // Emerald-500
 ];
 
-const mockActivities = [
-    {
-        id: 1,
-        title: 'Fix Navigation Bug',
-        date: '2023-10-16',
-        priority: 'HIGH',
-        priorityColor: 'badge-error',
-    },
-    {
-        id: 2,
-        title: 'App Store Screenshots',
-        date: '2023-10-12',
-        priority: 'LOW',
-        priorityColor: 'badge-ghost',
-    },
-    {
-        id: 3,
-        title: 'API Integration',
-        date: '2023-10-10',
-        priority: 'URGENT',
-        priorityColor: 'badge-primary',
-    },
-    {
-        id: 4,
-        title: 'Implement Dark Mode',
-        date: '2023-10-05',
-        priority: 'MEDIUM',
-        priorityColor: 'badge-warning',
-    },
-    {
-        id: 5,
-        title: 'Design Home Page',
-        date: '2023-10-02',
-        priority: 'HIGH',
-        priorityColor: 'badge-error',
-    },
+const priorityData = [
+    { name: 'High', value: 4, color: '#ef4444' },    // Red-500
+    { name: 'Medium', value: 3, color: '#f59e0b' },  // Amber-500
+    { name: 'Low', value: 2, color: '#3b82f6' },     // Blue-500
 ];
 
 export default function DashboardHome() {
@@ -135,9 +106,9 @@ export default function DashboardHome() {
             </div>
 
             {/* Main Content Grid: Chart & Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                 {/* Task Distribution Chart */}
-                <div className="col-span-1 lg:col-span-2 card bg-base-100 shadow-sm border border-base-200">
+                <div className="col-span-1 lg:col-span-3 card bg-base-100 shadow-sm border border-base-200">
                     <div className="card-body">
                         <h2 className="card-title text-lg mb-6">Task Status Distribution</h2>
                         <div className="h-[300px] w-full">
@@ -158,11 +129,15 @@ export default function DashboardHome() {
                                     />
                                     <Tooltip
                                         cursor={{ fill: 'transparent' }}
-                                        contentStyle={{
-                                            backgroundColor: 'oklch(var(--b1))',
-                                            borderColor: 'oklch(var(--b2))',
-                                            borderRadius: '0.5rem',
-                                            color: 'oklch(var(--bc))'
+                                        content={({ active, payload }) => {
+                                            if (active && payload && payload.length) {
+                                                return (
+                                                    <div className="bg-base-100 border border-base-200 p-2 rounded-lg shadow-sm">
+                                                        <p className="text-base-content font-medium">{payload[0].payload.name}: {payload[0].value}</p>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
                                         }}
                                     />
                                     <Bar dataKey="value" radius={[4, 4, 0, 0]}>
@@ -176,26 +151,42 @@ export default function DashboardHome() {
                     </div>
                 </div>
 
-                {/* Recent Activity */}
-                <div className="col-span-1 card bg-base-100 shadow-sm border border-base-200">
+                {/* Task Priority Distribution Chart */}
+                <div className="col-span-1 lg:col-span-2 card bg-base-100 shadow-sm border border-base-200">
                     <div className="card-body">
-                        <h2 className="card-title text-lg mb-4">Recent Activity</h2>
-                        <div className="space-y-6">
-                            {mockActivities.map((activity) => (
-                                <div key={activity.id} className="flex gap-4">
-                                    <div className="flex flex-col items-center">
-                                        <div className="w-2 h-2 rounded-full bg-primary mt-2"></div>
-                                        <div className="w-0.5 h-full bg-base-200 mt-1 -mb-6 last:hidden"></div>
-                                    </div>
-                                    <div className="flex-1 pb-1">
-                                        <div className="font-medium text-base-content">{activity.title}</div>
-                                        <div className="text-xs text-base-content/50 mt-0.5">Created on {activity.date}</div>
-                                        <div className={`badge ${activity.priorityColor} badge-xs mt-2 font-semibold`}>
-                                            {activity.priority}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                        <h2 className="card-title text-lg mb-6">Task Priority</h2>
+                        <div className="h-[300px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={priorityData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                    >
+                                        {priorityData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        cursor={{ fill: 'transparent' }}
+                                        content={({ active, payload }) => {
+                                            if (active && payload && payload.length) {
+                                                return (
+                                                    <div className="bg-base-100 border border-base-200 p-2 rounded-lg shadow-sm">
+                                                        <p className="text-base-content font-medium">{payload[0].name}: {payload[0].value}</p>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        }}
+                                    />
+                                    <Legend />
+                                </PieChart>
+                            </ResponsiveContainer>
                         </div>
                     </div>
                 </div>
