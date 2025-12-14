@@ -212,7 +212,7 @@ export default function ProjectsPage() {
     }
 
     return (
-        <div className="p-6 min-h-screen bg-base-200">
+        <div className="p-6 min-h-screen">
             {/* Top Section */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 animate-in fade-in slide-in-from-top-1 duration-700">
                 <div>

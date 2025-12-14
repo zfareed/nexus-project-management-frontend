@@ -404,7 +404,7 @@ export default function TasksPage() {
     }
 
     return (
-        <div className="p-6 lg:p-10 bg-base-200 min-h-screen">
+        <div className="p-6 lg:p-10 min-h-screen">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4 animate-in fade-in slide-in-from-top-1 duration-700">
                 <div>

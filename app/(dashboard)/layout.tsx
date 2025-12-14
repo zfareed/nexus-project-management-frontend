@@ -37,7 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <input id="dashboard-drawer" type="checkbox" className="drawer-toggle" />
 
             {/* Page Content */}
-            <div className="drawer-content flex flex-col min-h-screen bg-base-200">
+            <div className="drawer-content flex flex-col min-h-screen">
                 {/* Mobile Header (Only for toggling sidebar) */}
                 <div className="lg:hidden p-4">
                     <label htmlFor="dashboard-drawer" aria-label="open sidebar" className="btn btn-square btn-ghost">
