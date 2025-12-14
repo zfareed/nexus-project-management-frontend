@@ -14,22 +14,71 @@ import {
     Pie,
     Legend
 } from 'recharts';
+import api from '@/lib/axios';
 
-// Mock Data for Chart
-const data = [
-    { name: 'To Do', value: 2, color: '#94a3b8' },      // Slate-400
-    { name: 'In Progress', value: 1, color: '#0ea5e9' }, // Sky-500
-    { name: 'Review', value: 1, color: '#f59e0b' },     // Amber-500
-    { name: 'Done', value: 1, color: '#10b981' },       // Emerald-500
-];
 
-const priorityData = [
-    { name: 'High', value: 4, color: '#ef4444' },    // Red-500
-    { name: 'Medium', value: 3, color: '#f59e0b' },  // Amber-500
-    { name: 'Low', value: 2, color: '#3b82f6' },     // Blue-500
-];
 
 export default function DashboardHome() {
+    const [stats, setStats] = React.useState<any>(null);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const response = await api.get('/dashboard/stats');
+                setStats(response.data);
+            } catch (error) {
+                console.error('Failed to fetch dashboard stats', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <span className="loading loading-spinner loading-lg text-primary"></span>
+            </div>
+        );
+    }
+
+    if (!stats) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <p className="text-error">Failed to load dashboard data.</p>
+            </div>
+        )
+    }
+
+    // Map API data to Chart data
+    const statusColors: Record<string, string> = {
+        'TODO': '#94a3b8',
+        'IN_PROGRESS': '#0ea5e9',
+        'REVIEW': '#f59e0b',
+        'DONE': '#10b981',
+    };
+
+    const priorityColors: Record<string, string> = {
+        'HIGH': '#ef4444',
+        'MEDIUM': '#f59e0b',
+        'LOW': '#3b82f6',
+    };
+
+    const chartData = stats.taskStatusDistribution?.map((item: any) => ({
+        name: item.status.replace('_', ' '), // e.g. IN_PROGRESS -> IN PROGRESS
+        value: item.count,
+        color: statusColors[item.status] || '#cbd5e1'
+    })) || [];
+
+    const priorityChartData = stats.taskPriorityDistribution?.map((item: any) => ({
+        name: item.priority,
+        value: item.count,
+        color: priorityColors[item.priority] || '#cbd5e1'
+    })) || [];
+
     return (
         <div className="space-y-8 animate-fade-in-up pb-10">
             {/* Header */}
@@ -45,7 +94,7 @@ export default function DashboardHome() {
                     <div className="card-body p-6 flex flex-row items-center justify-between">
                         <div>
                             <div className="text-sm font-medium text-base-content/60 mb-1">Total Projects</div>
-                            <div className="text-3xl font-bold text-base-content">3</div>
+                            <div className="text-3xl font-bold text-base-content">{stats.overview.totalProjects}</div>
                             <div className="text-xs text-primary mt-1 font-medium">Active workflows</div>
                         </div>
                         <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
@@ -61,8 +110,8 @@ export default function DashboardHome() {
                     <div className="card-body p-6 flex flex-row items-center justify-between">
                         <div>
                             <div className="text-sm font-medium text-base-content/60 mb-1">Tasks Completed</div>
-                            <div className="text-3xl font-bold text-base-content">1</div>
-                            <div className="text-xs text-success mt-1 font-medium">20% completion rate</div>
+                            <div className="text-3xl font-bold text-base-content">{stats.overview.tasksCompleted}</div>
+                            <div className="text-xs text-success mt-1 font-medium">{stats.overview.completionRate}% completion rate</div>
                         </div>
                         <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center text-success">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -77,7 +126,7 @@ export default function DashboardHome() {
                     <div className="card-body p-6 flex flex-row items-center justify-between">
                         <div>
                             <div className="text-sm font-medium text-base-content/60 mb-1">Pending Tasks</div>
-                            <div className="text-3xl font-bold text-base-content">4</div>
+                            <div className="text-3xl font-bold text-base-content">{stats.overview.pendingTasks}</div>
                             <div className="text-xs text-info mt-1 font-medium">Requires attention</div>
                         </div>
                         <div className="w-12 h-12 rounded-xl bg-info/10 flex items-center justify-center text-info">
@@ -93,7 +142,7 @@ export default function DashboardHome() {
                     <div className="card-body p-6 flex flex-row items-center justify-between">
                         <div>
                             <div className="text-sm font-medium text-base-content/60 mb-1">Overdue</div>
-                            <div className="text-3xl font-bold text-base-content">4</div>
+                            <div className="text-3xl font-bold text-base-content">{stats.overview.overdueTasks}</div>
                             <div className="text-xs text-error mt-1 font-medium">High priority</div>
                         </div>
                         <div className="w-12 h-12 rounded-xl bg-error/10 flex items-center justify-center text-error">
@@ -113,7 +162,7 @@ export default function DashboardHome() {
                         <h2 className="card-title text-lg mb-6">Task Status Distribution</h2>
                         <div className="h-[300px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={data} barSize={60}>
+                                <BarChart data={chartData} barSize={60}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="oklch(var(--b2))" />
                                     <XAxis
                                         dataKey="name"
@@ -141,7 +190,7 @@ export default function DashboardHome() {
                                         }}
                                     />
                                     <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                                        {data.map((entry, index) => (
+                                        {chartData.map((entry: any, index: number) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
                                         ))}
                                     </Bar>
@@ -159,7 +208,7 @@ export default function DashboardHome() {
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
-                                        data={priorityData}
+                                        data={priorityChartData}
                                         cx="50%"
                                         cy="50%"
                                         innerRadius={60}
@@ -167,7 +216,7 @@ export default function DashboardHome() {
                                         paddingAngle={5}
                                         dataKey="value"
                                     >
-                                        {priorityData.map((entry, index) => (
+                                        {priorityChartData.map((entry: any, index: number) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
                                         ))}
                                     </Pie>
