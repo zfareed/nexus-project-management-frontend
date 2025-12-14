@@ -50,16 +50,38 @@ export default function RegisterPage() {
         }
 
         try {
-            // Simulate API interaction
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-            setSuccess('Account created successfully! Redirecting to login...');
+            const response = await fetch('http://localhost:3000/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: formData.fullName,
+                    email: formData.email,
+                    password: formData.password,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                // Handle specific error messages from backend if available
+                throw new Error(data.message || 'Registration failed');
+            }
+
+            setSuccess('Account created successfully! Redirecting...');
+
+            // Store token and user data
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
 
             // Redirect after success
             setTimeout(() => {
-                router.push('/login');
-            }, 2000);
-        } catch (err) {
-            setError('Failed to create account. Please try again.');
+                router.push('/');
+            }, 1000);
+        } catch (err: any) {
+            console.error('Registration error:', err);
+            setError(err.message || 'Failed to create account. Please try again.');
         } finally {
             setIsLoading(false);
         }
