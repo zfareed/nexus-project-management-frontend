@@ -2,10 +2,42 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import api from '@/lib/axios';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const router = useRouter();
+
+    const [isAuthChecking, setIsAuthChecking] = React.useState(true);
+
+    React.useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            router.push('/login');
+        } else {
+            setIsAuthChecking(false);
+        }
+    }, [router]);
+
+    const handleLogout = async () => {
+        try {
+            await api.post('/auth/logout');
+        } catch (error) {
+            console.error('Logout failed', error);
+        } finally {
+            localStorage.clear();
+            router.push('/login');
+        }
+    };
+
+    if (isAuthChecking) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-base-200">
+                <span className="loading loading-spinner loading-lg text-primary"></span>
+            </div>
+        );
+    }
 
     const menuItems = [
         {
@@ -99,12 +131,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                     {/* Sidebar Footer */}
                     <div className="mt-auto p-4 border-t border-white/10">
-                        <Link href="/login" className="flex items-center gap-3 px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-left">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
                             </svg>
                             Sign Out
-                        </Link>
+                        </button>
                     </div>
                 </div>
             </div>

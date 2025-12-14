@@ -35,10 +35,9 @@ api.interceptors.response.use(
     (error) => {
         // Handle response errors (e.g., 401 Unauthorized)
         if (error.response && error.response.status === 401) {
-            // Optional: Handle 401 globally (e.g., redirect to login)
-            // if (typeof window !== 'undefined') {
-            //   window.location.href = '/login';
-            // }
+            if (typeof window !== 'undefined') {
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }

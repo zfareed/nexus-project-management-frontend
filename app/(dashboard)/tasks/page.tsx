@@ -7,7 +7,7 @@ import api from '@/lib/axios';
 // --- Types ---
 
 type Priority = 'LOW' | 'MEDIUM' | 'HIGH';
-type Status = 'TODO' | 'IN_PROGRESS' | 'DONE';
+type Status = 'TODO' | 'IN_PROGRESS' | 'REVIEW' | 'DONE';
 
 interface User {
     id: string;
@@ -188,6 +188,7 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData, title, submitLabel,
                             >
                                 <option value="TODO">TODO</option>
                                 <option value="IN_PROGRESS">IN PROGRESS</option>
+                                <option value="REVIEW">REVIEW</option>
                                 <option value="DONE">DONE</option>
                             </select>
                         </div>
@@ -315,7 +316,7 @@ export default function TasksPage() {
     }, []);
 
     const columns = useMemo(() => {
-        const cols: Record<Status, Task[]> = { 'TODO': [], 'IN_PROGRESS': [], 'DONE': [] };
+        const cols: Record<Status, Task[]> = { 'TODO': [], 'IN_PROGRESS': [], 'REVIEW': [], 'DONE': [] };
         tasks.forEach(task => {
             if (cols[task.status]) {
                 cols[task.status].push(task);
@@ -408,7 +409,7 @@ export default function TasksPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4 animate-in fade-in slide-in-from-top-1 duration-700">
                 <div>
-                    <h1 className="text-4xl font-extrabold tracking-tight text-base-content">Tasks</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-base-content">Tasks</h1>
                     <p className="text-base-content/60 mt-2 text-lg">Manage your project tasks and track progress effectively.</p>
                 </div>
                 <button
@@ -421,17 +422,20 @@ export default function TasksPage() {
             </div>
 
             {/* Kanban Board */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
                 {(Object.keys(columns) as Status[]).map((status) => (
                     <div key={status} className="flex flex-col gap-4">
                         {/* Column Header */}
                         <div className="flex items-center justify-between px-1">
                             <div className="flex items-center gap-3">
                                 <div className={`w-3 h-3 rounded-full ${status === 'TODO' ? 'bg-neutral' :
-                                    status === 'IN_PROGRESS' ? 'bg-primary' : 'bg-success'
+                                    status === 'IN_PROGRESS' ? 'bg-primary' :
+                                        status === 'REVIEW' ? 'bg-warning' : 'bg-success'
                                     }`}></div>
                                 <h2 className="text-lg font-bold text-base-content/80 uppercase tracking-widest">
-                                    {status === 'TODO' ? 'To Do' : status === 'IN_PROGRESS' ? 'In Progress' : 'Done'}
+                                    {status === 'TODO' ? 'To Do' :
+                                        status === 'IN_PROGRESS' ? 'In Progress' :
+                                            status === 'REVIEW' ? 'Review' : 'Done'}
                                 </h2>
                                 <div className="badge badge-ghost font-mono">{columns[status].length}</div>
                             </div>
@@ -518,7 +522,9 @@ export default function TasksPage() {
                             {columns[status].length === 0 && (
                                 <div className="flex flex-col items-center justify-center py-16 text-base-content/30 border-2 border-dashed border-base-300/50 rounded-xl">
                                     <span className="text-4xl mb-2 opacity-20">📝</span>
-                                    <p className="text-sm font-medium">No tasks in {status === 'TODO' ? 'To Do' : status === 'IN_PROGRESS' ? 'In Progress' : 'Done'}</p>
+                                    <p className="text-sm font-medium">No tasks in {status === 'TODO' ? 'To Do' :
+                                        status === 'IN_PROGRESS' ? 'In Progress' :
+                                            status === 'REVIEW' ? 'Review' : 'Done'}</p>
                                 </div>
                             )}
                         </div>

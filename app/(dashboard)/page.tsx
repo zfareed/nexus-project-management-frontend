@@ -67,11 +67,24 @@ export default function DashboardHome() {
         'LOW': '#3b82f6',
     };
 
-    const chartData = stats.taskStatusDistribution?.map((item: any) => ({
-        name: item.status.replace('_', ' '), // e.g. IN_PROGRESS -> IN PROGRESS
-        value: item.count,
-        color: statusColors[item.status] || '#cbd5e1'
-    })) || [];
+    const statusOrder: Record<string, number> = {
+        'TODO': 1,
+        'IN_PROGRESS': 2,
+        'REVIEW': 3,
+        'DONE': 4,
+    };
+
+    const chartData = stats.taskStatusDistribution
+        ?.sort((a: any, b: any) => {
+            const orderA = statusOrder[a.status] || 99;
+            const orderB = statusOrder[b.status] || 99;
+            return orderA - orderB;
+        })
+        .map((item: any) => ({
+            name: item.status.replace('_', ' '), // e.g. IN_PROGRESS -> IN PROGRESS
+            value: item.count,
+            color: statusColors[item.status] || '#cbd5e1'
+        })) || [];
 
     const priorityChartData = stats.taskPriorityDistribution?.map((item: any) => ({
         name: item.priority,
