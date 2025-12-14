@@ -2,16 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import api from '@/lib/axios';
-import 'cally';
 
-declare global {
-    namespace JSX {
-        interface IntrinsicElements {
-            'calendar-date': any;
-            'calendar-month': any;
-        }
-    }
-}
 
 // --- Types ---
 
@@ -80,28 +71,43 @@ interface TaskModalProps {
 }
 
 const TaskModal = ({ isOpen, onClose, onSubmit, initialData, title, submitLabel, projects, users }: TaskModalProps) => {
+    const getTodayString = () => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const [formData, setFormData] = useState<Partial<Task>>({
         title: '',
         description: '',
         status: 'TODO',
         priority: 'MEDIUM',
-        dueDate: null,
+        dueDate: getTodayString(),
         assigneeId: users[0]?.id || '',
         projectId: projects[0]?.id || '',
         ...initialData,
     });
 
+
+
     useEffect(() => {
         if (isOpen) {
+            const processedInitialData = { ...initialData };
+            if (processedInitialData.dueDate) {
+                processedInitialData.dueDate = new Date(processedInitialData.dueDate).toISOString().split('T')[0];
+            }
+
             setFormData({
                 title: '',
                 description: '',
                 status: 'TODO',
                 priority: 'MEDIUM',
-                dueDate: null,
+                dueDate: getTodayString(),
                 assigneeId: users[0]?.id || '',
                 projectId: projects[0]?.id || '',
-                ...initialData,
+                ...processedInitialData,
             });
         }
     }, [isOpen, initialData, users, projects]);
@@ -203,51 +209,15 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData, title, submitLabel,
                     </div>
 
                     <div className="form-control w-full">
-                        <style>{`
-                            calendar-month {
-                                --color-accent: oklch(var(--p));
-                                --color-text-on-accent: oklch(var(--pc));
-                            }
-                            calendar-month::part(button) {
-                                padding: 0.5rem;
-                                border-radius: 0.5rem;
-                                transition: background-color 0.2s;
-                            }
-                            calendar-month::part(button):hover {
-                                background-color: var(--fallback-b2,oklch(var(--b2)/1));
-                            }
-                        `}</style>
                         <label className="label">
                             <span className="label-text font-medium text-base-content/70">Due Date</span>
                         </label>
-                        <div className="dropdown dropdown-bottom w-full">
-                            <div tabIndex={0} role="button" className="input input-bordered w-full flex items-center justify-between cursor-pointer group">
-                                <span className={!formData.dueDate ? "text-base-content/50" : ""}>
-                                    {formData.dueDate ? formData.dueDate.split('T')[0] : 'Select Due Date'}
-                                </span>
-                                <span className="opacity-50 group-hover:opacity-100 transition-opacity">🗓️</span>
-                            </div>
-                            <div tabIndex={0} className="dropdown-content z-[100] p-4 shadow-xl bg-base-100 rounded-box border border-base-200 mt-2 w-auto">
-                                {/* @ts-ignore */}
-                                <calendar-date
-                                    value={formData.dueDate ? formData.dueDate.split('T')[0] : ''}
-                                    onChange={(e: any) => {
-                                        setFormData({ ...formData, dueDate: e.target.value });
-
-                                        // Close the dropdown more reliably
-                                        const formInput = e.target.closest('.dropdown')?.querySelector('[role="button"]') as HTMLElement;
-                                        if (formInput) formInput.blur();
-
-                                        if (document.activeElement instanceof HTMLElement) {
-                                            document.activeElement.blur();
-                                        }
-                                    }}
-                                >
-                                    {/* @ts-ignore */}
-                                    <calendar-month></calendar-month>
-                                </calendar-date>
-                            </div>
-                        </div>
+                        <input
+                            type="date"
+                            className="input input-bordered w-full focus:input-primary"
+                            value={formData.dueDate || ''}
+                            onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                        />
                     </div>
 
 
