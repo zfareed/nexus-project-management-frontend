@@ -178,13 +178,25 @@ export default function ProjectsPage() {
     };
 
     const UserAvatar = ({ user }: { user: User }) => {
+        const colors = [
+            'bg-primary text-primary-content',
+            'bg-secondary text-secondary-content',
+            'bg-accent text-accent-content',
+            'bg-info text-info-content',
+            'bg-success text-success-content',
+            'bg-warning text-warning-content',
+            'bg-error text-error-content',
+        ];
+        const hash = user.name.split('').reduce((acc, char) => char.charCodeAt(0) + acc, 0);
+        const colorClass = colors[hash % colors.length];
+
         return (
             <div className="avatar">
-                <div className="w-10 rounded-full bg-neutral-focus text-neutral-content flex items-center justify-center">
+                <div className={`w-10 rounded-full ${colorClass} flex items-center justify-center`}>
                     {user.avatar ? (
                         <img src={user.avatar} alt={user.name} />
                     ) : (
-                        <span className="text-sm font-medium">{user.name.charAt(0).toUpperCase()}</span>
+                        <span className="text-sm font-bold">{user.name.charAt(0).toUpperCase()}</span>
                     )}
                 </div>
             </div>
@@ -243,16 +255,30 @@ export default function ProjectsPage() {
                                 </p>
 
                                 <div className="mt-4 flex -space-x-2 overflow-hidden">
-                                    {project.assignedUsers.slice(0, 3).map((user) => (
-                                        <div key={user.id} className="avatar tooltip" data-tip={user.name}>
-                                            <div className="w-8 h-8 rounded-full border-2 border-base-100 bg-neutral text-neutral-content flex items-center justify-center text-xs">
-                                                {user.avatar ? <img src={user.avatar} alt={user.name} /> : <span>{user.name.charAt(0).toUpperCase()}</span>}
+                                    {project.assignedUsers.slice(0, 3).map((user) => {
+                                        const colors = [
+                                            'bg-primary text-primary-content',
+                                            'bg-secondary text-secondary-content',
+                                            'bg-accent text-accent-content',
+                                            'bg-info text-info-content',
+                                            'bg-success text-success-content',
+                                            'bg-warning text-warning-content',
+                                            'bg-error text-error-content',
+                                        ];
+                                        const hash = user.name.split('').reduce((acc, char) => char.charCodeAt(0) + acc, 0);
+                                        const colorClass = colors[hash % colors.length];
+
+                                        return (
+                                            <div key={user.id} className="avatar tooltip" data-tip={user.name}>
+                                                <div className={`w-8 h-8 rounded-full border-2 border-base-100 ${colorClass} flex items-center justify-center text-xs font-bold`}>
+                                                    {user.avatar ? <img src={user.avatar} alt={user.name} /> : <span>{user.name.charAt(0).toUpperCase()}</span>}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                     {project.assignedUsers.length > 3 && (
                                         <div className="avatar placeholder">
-                                            <div className="w-8 h-8 rounded-full bg-neutral-focus text-neutral-content text-xs flex items-center justify-center">
+                                            <div className="w-8 h-8 rounded-full border-2 border-base-100 bg-base-200 text-black text-xs font-bold flex items-center justify-center">
                                                 <span>+{project.assignedUsers.length - 3}</span>
                                             </div>
                                         </div>
