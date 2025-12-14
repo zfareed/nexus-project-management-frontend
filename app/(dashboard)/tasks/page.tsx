@@ -1,16 +1,33 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import api from '@/lib/axios';
+import 'cally';
+
+declare global {
+    namespace JSX {
+        interface IntrinsicElements {
+            'calendar-date': any;
+            'calendar-month': any;
+        }
+    }
+}
 
 // --- Types ---
 
-type Priority = 'Low' | 'Medium' | 'High';
-type Status = 'Todo' | 'In Progress' | 'Done';
+type Priority = 'LOW' | 'MEDIUM' | 'HIGH';
+type Status = 'TODO' | 'IN_PROGRESS' | 'DONE';
 
 interface User {
     id: string;
     name: string;
-    avatar: string;
+    email?: string;
+    avatar?: string;
+}
+
+interface Project {
+    id: string;
+    name: string;
 }
 
 interface Task {
@@ -19,68 +36,14 @@ interface Task {
     description: string;
     status: Status;
     priority: Priority;
-    assignedTo: string; // User ID
-    project: string; // Project ID
+    dueDate: string | null;
+    projectId: string;
+    assigneeId: string;
     createdAt: string;
+    updatedAt: string;
+    project: Project;
+    assignee: User;
 }
-
-// --- Mock Data ---
-
-const MOCK_USERS: User[] = [
-    { id: 'u1', name: 'Alice Admin', avatar: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp' },
-    { id: 'u2', name: 'Bob User', avatar: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp' },
-    { id: 'u3', name: 'Charlie Dev', avatar: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp' },
-    { id: 'u4', name: 'Diana Design', avatar: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp' },
-];
-
-const MOCK_PROJECTS = [
-    { id: 'p1', name: 'Website Redesign' },
-    { id: 'p2', name: 'Mobile App Development' },
-    { id: 'p3', name: 'Marketing Campaign' },
-];
-
-const INITIAL_TASKS: Task[] = [
-    {
-        id: 't1',
-        title: 'Design Dashboard Mockups',
-        description: 'Create high-fidelity mockups for the new dashboard based on client requirements.',
-        status: 'Todo',
-        priority: 'High',
-        assignedTo: 'u1',
-        project: 'p1',
-        createdAt: '2023-10-25T10:00:00Z',
-    },
-    {
-        id: 't2',
-        title: 'Integrate Auth API',
-        description: 'Connect the frontend login form to the backend authentication endpoints.',
-        status: 'In Progress',
-        priority: 'High',
-        assignedTo: 'u3',
-        project: 'p1',
-        createdAt: '2023-10-26T14:30:00Z',
-    },
-    {
-        id: 't3',
-        title: 'Update Documentation',
-        description: 'Review and update the project README and API documentation.',
-        status: 'Done',
-        priority: 'Low',
-        assignedTo: 'u2',
-        project: 'p2',
-        createdAt: '2023-10-20T09:15:00Z',
-    },
-    {
-        id: 't4',
-        title: 'Fix Navigation Bug',
-        description: 'Resolve the issue where the mobile menu does not close after selection.',
-        status: 'Todo',
-        priority: 'Medium',
-        assignedTo: 'u4',
-        project: 'p2',
-        createdAt: '2023-10-27T11:00:00Z',
-    },
-];
 
 // --- Components ---
 
@@ -96,9 +59,9 @@ const TrashIcon = () => (
 
 const PriorityBadge = ({ priority }: { priority: Priority }) => {
     const colors = {
-        Low: 'badge-info',
-        Medium: 'badge-warning',
-        High: 'badge-error',
+        LOW: 'badge-info',
+        MEDIUM: 'badge-warning',
+        HIGH: 'badge-error',
     };
     return <div className={`badge ${colors[priority]} badge-sm text-white font-medium`}>{priority}</div>;
 };
@@ -108,20 +71,23 @@ const PriorityBadge = ({ priority }: { priority: Priority }) => {
 interface TaskModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (task: Omit<Task, 'id' | 'createdAt'>) => void;
+    onSubmit: (task: Partial<Task>) => void;
     initialData?: Partial<Task>;
     title: string;
     submitLabel: string;
+    projects: Project[];
+    users: User[];
 }
 
-const TaskModal = ({ isOpen, onClose, onSubmit, initialData, title, submitLabel }: TaskModalProps) => {
+const TaskModal = ({ isOpen, onClose, onSubmit, initialData, title, submitLabel, projects, users }: TaskModalProps) => {
     const [formData, setFormData] = useState<Partial<Task>>({
         title: '',
         description: '',
-        status: 'Todo',
-        priority: 'Medium',
-        assignedTo: MOCK_USERS[0].id,
-        project: MOCK_PROJECTS[0].id,
+        status: 'TODO',
+        priority: 'MEDIUM',
+        dueDate: null,
+        assigneeId: users[0]?.id || '',
+        projectId: projects[0]?.id || '',
         ...initialData,
     });
 
@@ -130,22 +96,22 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData, title, submitLabel 
             setFormData({
                 title: '',
                 description: '',
-                status: 'Todo',
-                priority: 'Medium',
-                assignedTo: MOCK_USERS[0].id,
-                project: MOCK_PROJECTS[0].id,
+                status: 'TODO',
+                priority: 'MEDIUM',
+                dueDate: null,
+                assigneeId: users[0]?.id || '',
+                projectId: projects[0]?.id || '',
                 ...initialData,
             });
         }
-    }, [isOpen, initialData]);
+    }, [isOpen, initialData, users, projects]);
 
     if (!isOpen) return null;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.title) return;
-        onSubmit(formData as Omit<Task, 'id' | 'createdAt'>);
-        onClose();
+        onSubmit(formData);
     };
 
     return (
@@ -173,10 +139,11 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData, title, submitLabel 
                             </label>
                             <select
                                 className="select select-bordered w-full focus:select-primary"
-                                value={formData.project}
-                                onChange={(e) => setFormData({ ...formData, project: e.target.value })}
+                                value={formData.projectId}
+                                onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
                             >
-                                {MOCK_PROJECTS.map((project) => (
+                                <option value="" disabled>Select Project</option>
+                                {projects.map((project) => (
                                     <option key={project.id} value={project.id}>
                                         {project.name}
                                     </option>
@@ -190,10 +157,11 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData, title, submitLabel 
                             </label>
                             <select
                                 className="select select-bordered w-full focus:select-primary"
-                                value={formData.assignedTo}
-                                onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
+                                value={formData.assigneeId}
+                                onChange={(e) => setFormData({ ...formData, assigneeId: e.target.value })}
                             >
-                                {MOCK_USERS.map((user) => (
+                                <option value="" disabled>Select Assignee</option>
+                                {users.map((user) => (
                                     <option key={user.id} value={user.id}>
                                         {user.name}
                                     </option>
@@ -212,9 +180,9 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData, title, submitLabel 
                                 value={formData.status}
                                 onChange={(e) => setFormData({ ...formData, status: e.target.value as Status })}
                             >
-                                <option value="Todo">TODO</option>
-                                <option value="In Progress">IN PROGRESS</option>
-                                <option value="Done">DONE</option>
+                                <option value="TODO">TODO</option>
+                                <option value="IN_PROGRESS">IN PROGRESS</option>
+                                <option value="DONE">DONE</option>
                             </select>
                         </div>
 
@@ -227,10 +195,58 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData, title, submitLabel 
                                 value={formData.priority}
                                 onChange={(e) => setFormData({ ...formData, priority: e.target.value as Priority })}
                             >
-                                <option value="Low">LOW</option>
-                                <option value="Medium">MEDIUM</option>
-                                <option value="High">HIGH</option>
+                                <option value="LOW">LOW</option>
+                                <option value="MEDIUM">MEDIUM</option>
+                                <option value="HIGH">HIGH</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <div className="form-control w-full">
+                        <style>{`
+                            calendar-month {
+                                --color-accent: oklch(var(--p));
+                                --color-text-on-accent: oklch(var(--pc));
+                            }
+                            calendar-month::part(button) {
+                                padding: 0.5rem;
+                                border-radius: 0.5rem;
+                                transition: background-color 0.2s;
+                            }
+                            calendar-month::part(button):hover {
+                                background-color: var(--fallback-b2,oklch(var(--b2)/1));
+                            }
+                        `}</style>
+                        <label className="label">
+                            <span className="label-text font-medium text-base-content/70">Due Date</span>
+                        </label>
+                        <div className="dropdown dropdown-bottom w-full">
+                            <div tabIndex={0} role="button" className="input input-bordered w-full flex items-center justify-between cursor-pointer group">
+                                <span className={!formData.dueDate ? "text-base-content/50" : ""}>
+                                    {formData.dueDate ? formData.dueDate.split('T')[0] : 'Select Due Date'}
+                                </span>
+                                <span className="opacity-50 group-hover:opacity-100 transition-opacity">🗓️</span>
+                            </div>
+                            <div tabIndex={0} className="dropdown-content z-[100] p-4 shadow-xl bg-base-100 rounded-box border border-base-200 mt-2 w-auto">
+                                {/* @ts-ignore */}
+                                <calendar-date
+                                    value={formData.dueDate ? formData.dueDate.split('T')[0] : ''}
+                                    onChange={(e: any) => {
+                                        setFormData({ ...formData, dueDate: e.target.value });
+
+                                        // Close the dropdown more reliably
+                                        const formInput = e.target.closest('.dropdown')?.querySelector('[role="button"]') as HTMLElement;
+                                        if (formInput) formInput.blur();
+
+                                        if (document.activeElement instanceof HTMLElement) {
+                                            document.activeElement.blur();
+                                        }
+                                    }}
+                                >
+                                    {/* @ts-ignore */}
+                                    <calendar-month></calendar-month>
+                                </calendar-date>
+                            </div>
                         </div>
                     </div>
 
@@ -290,13 +306,46 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, itemName }: Delet
 // --- Main Page Component ---
 
 export default function TasksPage() {
-    const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+    const [tasks, setTasks] = useState<Task[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [loading, setLoading] = useState(true);
+
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
 
+    const fetchTasks = async () => {
+        try {
+            setLoading(true);
+            const [tasksRes, usersRes, projectsRes] = await Promise.all([
+                api.get('/tasks'),
+                api.get('/users'),
+                api.get('/projects')
+            ]);
+
+            // Handle tasks response structure
+            setTasks(tasksRes.data.tasks || []);
+
+            // Handle users response structure
+            setUsers(usersRes.data.users || []);
+
+            // Handle projects response
+            setProjects(projectsRes.data || []);
+
+        } catch (error) {
+            console.error("Failed to fetch data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTasks();
+    }, []);
+
     const columns = useMemo(() => {
-        const cols: Record<Status, Task[]> = { 'Todo': [], 'In Progress': [], 'Done': [] };
+        const cols: Record<Status, Task[]> = { 'TODO': [], 'IN_PROGRESS': [], 'DONE': [] };
         tasks.forEach(task => {
             if (cols[task.status]) {
                 cols[task.status].push(task);
@@ -305,35 +354,84 @@ export default function TasksPage() {
         return cols;
     }, [tasks]);
 
-    const handleCreate = (newTaskData: Omit<Task, 'id' | 'createdAt'>) => {
-        const newTask: Task = {
-            ...newTaskData,
-            id: Math.random().toString(36).substr(2, 9),
-            createdAt: new Date().toISOString(),
-        };
-        setTasks([...tasks, newTask]);
-        setIsCreateOpen(false); // Ensure close
+    const handleCreate = async (newTaskData: Partial<Task>) => {
+        try {
+            const payload = {
+                title: newTaskData.title,
+                description: newTaskData.description,
+                status: newTaskData.status,
+                priority: newTaskData.priority,
+                dueDate: newTaskData.dueDate || null,
+                projectId: newTaskData.projectId,
+                assigneeId: newTaskData.assigneeId
+            };
+
+            const response = await api.post('/tasks', payload);
+            const createdTask = response.data.task;
+
+            setTasks((prev) => [...prev, createdTask]);
+            setIsCreateOpen(false);
+        } catch (error) {
+            console.error("Failed to create task", error);
+        }
     };
 
-    const handleUpdate = (updatedTaskData: Omit<Task, 'id' | 'createdAt'>) => {
+    const handleUpdateSubmit = async (updatedTaskData: Partial<Task>) => {
         if (!editingTask) return;
-        const updatedTask = { ...editingTask, ...updatedTaskData };
-        setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
-        setEditingTask(null);
+
+        try {
+            const payload = {
+                title: updatedTaskData.title,
+                description: updatedTaskData.description,
+                status: updatedTaskData.status,
+                priority: updatedTaskData.priority,
+                dueDate: updatedTaskData.dueDate || null,
+                projectId: updatedTaskData.projectId,
+                assigneeId: updatedTaskData.assigneeId
+            };
+
+            const response = await api.put(`/tasks/${editingTask.id}`, payload);
+            const updatedTask = response.data.task;
+
+            setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
+            setEditingTask(null);
+        } catch (error) {
+            console.error("Failed to update task", error);
+        }
+    };
+
+    const handleEditClick = async (taskId: string) => {
+        try {
+            const response = await api.get(`/tasks/${taskId}`);
+            setEditingTask(response.data.task);
+        } catch (error) {
+            console.error("Failed to fetch task details", error);
+        }
     };
 
     const handleDelete = (id: string) => {
         setTaskToDelete(id);
     };
 
-    const confirmDelete = () => {
-        if (taskToDelete) {
+    const confirmDelete = async () => {
+        if (!taskToDelete) return;
+
+        try {
+            await api.delete(`/tasks/${taskToDelete}`);
             setTasks(tasks.filter(t => t.id !== taskToDelete));
             setTaskToDelete(null);
+        } catch (error) {
+            console.error("Failed to delete task", error);
         }
     };
 
-    const getUser = (id: string) => MOCK_USERS.find(u => u.id === id);
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <span className="loading loading-spinner loading-lg text-primary"></span>
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 lg:p-10 bg-base-200 min-h-screen">
@@ -359,73 +457,76 @@ export default function TasksPage() {
                         {/* Column Header */}
                         <div className="flex items-center justify-between px-1">
                             <div className="flex items-center gap-3">
-                                <div className={`w-3 h-3 rounded-full ${status === 'Todo' ? 'bg-neutral' :
-                                    status === 'In Progress' ? 'bg-primary' : 'bg-success'
+                                <div className={`w-3 h-3 rounded-full ${status === 'TODO' ? 'bg-neutral' :
+                                    status === 'IN_PROGRESS' ? 'bg-primary' : 'bg-success'
                                     }`}></div>
-                                <h2 className="text-lg font-bold text-base-content/80 uppercase tracking-widest">{status}</h2>
+                                <h2 className="text-lg font-bold text-base-content/80 uppercase tracking-widest">
+                                    {status === 'TODO' ? 'To Do' : status === 'IN_PROGRESS' ? 'In Progress' : 'Done'}
+                                </h2>
                                 <div className="badge badge-ghost font-mono">{columns[status].length}</div>
                             </div>
                         </div>
 
                         {/* Column Area */}
                         <div className="bg-base-100/40 backdrop-blur-sm rounded-2xl p-4 min-h-[500px] flex flex-col gap-4 border border-base-content/5">
-                            {columns[status].map((task) => {
-                                const assignee = getUser(task.assignedTo);
-                                return (
-                                    <div key={task.id} className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-xl hover:border-primary/20 transition-all duration-300 group cursor-pointer">
-                                        <div className="card-body p-5 gap-3">
-                                            <div className="flex justify-between items-start gap-2">
-                                                <h3
-                                                    className="font-bold text-lg leading-snug cursor-pointer hover:text-primary transition-colors"
-                                                    onClick={() => setEditingTask(task)}
+                            {columns[status].map((task) => (
+                                <div key={task.id} className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-xl hover:border-primary/20 transition-all duration-300 group cursor-pointer">
+                                    <div className="card-body p-5 gap-3">
+                                        <div className="flex justify-between items-start gap-2">
+                                            <h3
+                                                className="font-bold text-lg leading-snug cursor-pointer hover:text-primary transition-colors"
+                                                onClick={() => handleEditClick(task.id)}
+                                            >
+                                                {task.title}
+                                            </h3>
+                                            <div className="lg:opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5">
+                                                <button
+                                                    className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:text-primary"
+                                                    onClick={() => handleEditClick(task.id)}
+                                                    aria-label="Edit Task"
                                                 >
-                                                    {task.title}
-                                                </h3>
-                                                <div className="lg:opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5">
-                                                    <button
-                                                        className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:text-primary"
-                                                        onClick={() => setEditingTask(task)}
-                                                        aria-label="Edit Task"
-                                                    >
-                                                        <EditIcon />
-                                                    </button>
-                                                    <button
-                                                        className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:text-error"
-                                                        onClick={() => handleDelete(task.id)}
-                                                        aria-label="Delete Task"
-                                                    >
-                                                        <TrashIcon />
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            <p className="text-sm text-base-content/70 line-clamp-3 mb-2">{task.description}</p>
-
-                                            <div className="flex items-center justify-between mt-auto pt-2 border-t border-base-200/50">
-                                                <PriorityBadge priority={task.priority} />
-
-                                                {assignee && (
-                                                    <div className="tooltip tooltip-left" data-tip={`Assigned to ${assignee.name}`}>
-                                                        <div className="avatar placeholder">
-                                                            <div className="w-8 h-8 rounded-full ring-2 ring-base-100 bg-neutral-focus text-neutral-content">
-                                                                {assignee.avatar ? (
-                                                                    <img src={assignee.avatar} alt={assignee.name} />
-                                                                ) : (
-                                                                    <span>{assignee.name.charAt(0)}</span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
+                                                    <EditIcon />
+                                                </button>
+                                                <button
+                                                    className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:text-error"
+                                                    onClick={() => handleDelete(task.id)}
+                                                    aria-label="Delete Task"
+                                                >
+                                                    <TrashIcon />
+                                                </button>
                                             </div>
                                         </div>
+
+                                        <p className="text-sm text-base-content/70 line-clamp-3 mb-2">{task.description}</p>
+
+                                        {task.project && (
+                                            <div className="badge badge-outline badge-sm opacity-70 mb-2">{task.project.name}</div>
+                                        )}
+
+                                        <div className="flex items-center justify-between mt-auto pt-2 border-t border-base-200/50">
+                                            <PriorityBadge priority={task.priority} />
+
+                                            {task.assignee && (
+                                                <div className="tooltip tooltip-left" data-tip={`Assigned to ${task.assignee.name}`}>
+                                                    <div className="avatar placeholder">
+                                                        <div className="w-8 h-8 rounded-full ring-2 ring-base-100 bg-neutral-focus text-neutral-content">
+                                                            {task.assignee.avatar ? (
+                                                                <img src={task.assignee.avatar} alt={task.assignee.name} />
+                                                            ) : (
+                                                                <span>{task.assignee.name.charAt(0)}</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                );
-                            })}
+                                </div>
+                            ))}
                             {columns[status].length === 0 && (
                                 <div className="flex flex-col items-center justify-center py-16 text-base-content/30 border-2 border-dashed border-base-300/50 rounded-xl">
                                     <span className="text-4xl mb-2 opacity-20">📝</span>
-                                    <p className="text-sm font-medium">No tasks in {status}</p>
+                                    <p className="text-sm font-medium">No tasks in {status === 'TODO' ? 'To Do' : status === 'IN_PROGRESS' ? 'In Progress' : 'Done'}</p>
                                 </div>
                             )}
                         </div>
@@ -440,16 +541,20 @@ export default function TasksPage() {
                 onSubmit={handleCreate}
                 title="Create New Task"
                 submitLabel="Create Task"
+                projects={projects}
+                users={users}
             />
 
             {editingTask && (
                 <TaskModal
                     isOpen={!!editingTask}
                     onClose={() => setEditingTask(null)}
-                    onSubmit={handleUpdate}
+                    onSubmit={handleUpdateSubmit}
                     initialData={editingTask}
                     title="Edit Task"
                     submitLabel="Save Changes"
+                    projects={projects}
+                    users={users}
                 />
             )}
 
