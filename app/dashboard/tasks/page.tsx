@@ -20,17 +20,24 @@ interface Task {
     status: Status;
     priority: Priority;
     assignedTo: string; // User ID
+    project: string; // Project ID
     createdAt: string;
 }
 
 // --- Mock Data ---
 
 const MOCK_USERS: User[] = [
-    { id: 'u1', name: 'Alex Johnson', avatar: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp' },
-    { id: 'u2', name: 'Sarah Williams', avatar: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp' },
-    { id: 'u3', name: 'Mike Chen', avatar: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp' },
-    { id: 'u4', name: 'Emma Davis', avatar: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp' },
-]; // Using stock placeholder images from daisyui docs for reliable loading, or I'll just use a placeholder service
+    { id: 'u1', name: 'Alice Admin', avatar: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp' },
+    { id: 'u2', name: 'Bob User', avatar: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp' },
+    { id: 'u3', name: 'Charlie Dev', avatar: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp' },
+    { id: 'u4', name: 'Diana Design', avatar: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp' },
+];
+
+const MOCK_PROJECTS = [
+    { id: 'p1', name: 'Website Redesign' },
+    { id: 'p2', name: 'Mobile App Development' },
+    { id: 'p3', name: 'Marketing Campaign' },
+];
 
 const INITIAL_TASKS: Task[] = [
     {
@@ -40,6 +47,7 @@ const INITIAL_TASKS: Task[] = [
         status: 'Todo',
         priority: 'High',
         assignedTo: 'u1',
+        project: 'p1',
         createdAt: '2023-10-25T10:00:00Z',
     },
     {
@@ -49,6 +57,7 @@ const INITIAL_TASKS: Task[] = [
         status: 'In Progress',
         priority: 'High',
         assignedTo: 'u3',
+        project: 'p1',
         createdAt: '2023-10-26T14:30:00Z',
     },
     {
@@ -58,6 +67,7 @@ const INITIAL_TASKS: Task[] = [
         status: 'Done',
         priority: 'Low',
         assignedTo: 'u2',
+        project: 'p2',
         createdAt: '2023-10-20T09:15:00Z',
     },
     {
@@ -67,6 +77,7 @@ const INITIAL_TASKS: Task[] = [
         status: 'Todo',
         priority: 'Medium',
         assignedTo: 'u4',
+        project: 'p2',
         createdAt: '2023-10-27T11:00:00Z',
     },
 ];
@@ -110,6 +121,7 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData, title, submitLabel 
         status: 'Todo',
         priority: 'Medium',
         assignedTo: MOCK_USERS[0].id,
+        project: MOCK_PROJECTS[0].id,
         ...initialData,
     });
 
@@ -121,6 +133,7 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData, title, submitLabel 
                 status: 'Todo',
                 priority: 'Medium',
                 assignedTo: MOCK_USERS[0].id,
+                project: MOCK_PROJECTS[0].id,
                 ...initialData,
             });
         }
@@ -137,16 +150,15 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData, title, submitLabel 
 
     return (
         <div className="modal modal-open z-50">
-            <div className="modal-box w-11/12 max-w-lg shadow-2xl">
-                <h3 className="font-bold text-2xl mb-6">{title}</h3>
+            <div className="modal-box w-11/12 max-w-lg shadow-2xl overflow-visible">
+                <h3 className="font-bold text-lg mb-6">{title}</h3>
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                    <div className="form-control">
+                    <div className="form-control w-full">
                         <label className="label">
-                            <span className="label-text font-medium">Title</span>
+                            <span className="label-text font-medium text-base-content/70">Title</span>
                         </label>
                         <input
                             type="text"
-                            placeholder="e.g., Redesign Homepage"
                             className="input input-bordered w-full focus:input-primary"
                             value={formData.title}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -154,65 +166,85 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData, title, submitLabel 
                         />
                     </div>
 
-                    <div className="form-control">
-                        <label className="label">
-                            <span className="label-text font-medium">Description</span>
-                        </label>
-                        <textarea
-                            className="textarea textarea-bordered h-24 focus:textarea-primary"
-                            placeholder="Briefly describe the task..."
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        ></textarea>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="form-control w-full">
+                            <label className="label">
+                                <span className="label-text font-medium text-base-content/70">Project</span>
+                            </label>
+                            <select
+                                className="select select-bordered w-full focus:select-primary"
+                                value={formData.project}
+                                onChange={(e) => setFormData({ ...formData, project: e.target.value })}
+                            >
+                                {MOCK_PROJECTS.map((project) => (
+                                    <option key={project.id} value={project.id}>
+                                        {project.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="form-control w-full">
+                            <label className="label">
+                                <span className="label-text font-medium text-base-content/70">Assignee</span>
+                            </label>
+                            <select
+                                className="select select-bordered w-full focus:select-primary"
+                                value={formData.assignedTo}
+                                onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
+                            >
+                                {MOCK_USERS.map((user) => (
+                                    <option key={user.id} value={user.id}>
+                                        {user.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="form-control">
+                        <div className="form-control w-full">
                             <label className="label">
-                                <span className="label-text font-medium">Status</span>
+                                <span className="label-text font-medium text-base-content/70">Status</span>
                             </label>
                             <select
                                 className="select select-bordered w-full focus:select-primary"
                                 value={formData.status}
                                 onChange={(e) => setFormData({ ...formData, status: e.target.value as Status })}
                             >
-                                <option value="Todo">Todo</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="Done">Done</option>
+                                <option value="Todo">TODO</option>
+                                <option value="In Progress">IN PROGRESS</option>
+                                <option value="Done">DONE</option>
                             </select>
                         </div>
 
-                        <div className="form-control">
+                        <div className="form-control w-full">
                             <label className="label">
-                                <span className="label-text font-medium">Priority</span>
+                                <span className="label-text font-medium text-base-content/70">Priority</span>
                             </label>
                             <select
                                 className="select select-bordered w-full focus:select-primary"
                                 value={formData.priority}
                                 onChange={(e) => setFormData({ ...formData, priority: e.target.value as Priority })}
                             >
-                                <option value="Low">Low</option>
-                                <option value="Medium">Medium</option>
-                                <option value="High">High</option>
+                                <option value="Low">LOW</option>
+                                <option value="Medium">MEDIUM</option>
+                                <option value="High">HIGH</option>
                             </select>
                         </div>
                     </div>
 
-                    <div className="form-control">
+
+
+                    <div className="form-control w-full">
                         <label className="label">
-                            <span className="label-text font-medium">Assigned To</span>
+                            <span className="label-text font-medium text-base-content/70">Description</span>
                         </label>
-                        <select
-                            className="select select-bordered w-full focus:select-primary"
-                            value={formData.assignedTo}
-                            onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
-                        >
-                            {MOCK_USERS.map((user) => (
-                                <option key={user.id} value={user.id}>
-                                    {user.name}
-                                </option>
-                            ))}
-                        </select>
+                        <textarea
+                            className="textarea textarea-bordered h-24 focus:textarea-primary w-full"
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        ></textarea>
                     </div>
 
                     <div className="modal-action mt-6">
@@ -230,12 +262,38 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData, title, submitLabel 
     );
 };
 
+interface DeleteConfirmationModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    itemName: string;
+}
+
+const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, itemName }: DeleteConfirmationModalProps) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="modal modal-open z-50">
+            <div className="modal-box w-11/12 max-w-sm shadow-2xl">
+                <h3 className="font-bold text-lg text-error">Delete {itemName}</h3>
+                <p className="py-4">Are you sure you want to delete this {itemName}? This action cannot be undone.</p>
+                <div className="modal-action">
+                    <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+                    <button className="btn btn-error" onClick={onConfirm}>Delete</button>
+                </div>
+            </div>
+            <div className="modal-backdrop bg-neutral/40 backdrop-blur-sm" onClick={onClose}></div>
+        </div>
+    );
+};
+
 // --- Main Page Component ---
 
 export default function TasksPage() {
     const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | null>(null);
+    const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
 
     const columns = useMemo(() => {
         const cols: Record<Status, Task[]> = { 'Todo': [], 'In Progress': [], 'Done': [] };
@@ -265,8 +323,13 @@ export default function TasksPage() {
     };
 
     const handleDelete = (id: string) => {
-        if (confirm('Are you sure you want to delete this task?')) {
-            setTasks(tasks.filter(t => t.id !== id));
+        setTaskToDelete(id);
+    };
+
+    const confirmDelete = () => {
+        if (taskToDelete) {
+            setTasks(tasks.filter(t => t.id !== taskToDelete));
+            setTaskToDelete(null);
         }
     };
 
@@ -297,7 +360,7 @@ export default function TasksPage() {
                         <div className="flex items-center justify-between px-1">
                             <div className="flex items-center gap-3">
                                 <div className={`w-3 h-3 rounded-full ${status === 'Todo' ? 'bg-neutral' :
-                                        status === 'In Progress' ? 'bg-primary' : 'bg-success'
+                                    status === 'In Progress' ? 'bg-primary' : 'bg-success'
                                     }`}></div>
                                 <h2 className="text-lg font-bold text-base-content/80 uppercase tracking-widest">{status}</h2>
                                 <div className="badge badge-ghost font-mono">{columns[status].length}</div>
@@ -389,6 +452,13 @@ export default function TasksPage() {
                     submitLabel="Save Changes"
                 />
             )}
+
+            <DeleteConfirmationModal
+                isOpen={!!taskToDelete}
+                onClose={() => setTaskToDelete(null)}
+                onConfirm={confirmDelete}
+                itemName="task"
+            />
         </div>
     );
 }
