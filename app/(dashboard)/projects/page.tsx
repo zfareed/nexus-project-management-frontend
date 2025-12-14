@@ -212,16 +212,16 @@ export default function ProjectsPage() {
     }
 
     return (
-        <div className="p-6 min-h-screen">
+        <div className="p-6 min-h-screen bg-base-200">
             {/* Top Section */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 animate-in fade-in slide-in-from-top-1 duration-700">
                 <div>
-                    <h1 className="text-3xl font-bold text-base-content">Projects</h1>
-                    <p className="text-base-content/60 mt-1">Manage and track your ongoing projects.</p>
+                    <h1 className="text-4xl font-extrabold text-base-content tracking-tight">Projects</h1>
+                    <p className="text-base-content/60 mt-2 text-lg">Manage and track your ongoing projects with ease.</p>
                 </div>
                 <button
                     onClick={handleOpenCreate}
-                    className="btn btn-primary text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 transition-all"
+                    className="btn btn-primary bg-gradient-to-r from-primary to-primary-focus border-none hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 transform hover:-translate-y-0.5 text-white"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -232,79 +232,102 @@ export default function ProjectsPage() {
 
             {/* Projects Grid */}
             {projects.length === 0 ? (
-                <div className="text-center py-20 opacity-50">
-                    <p className="text-xl">No projects found. Create one to get started!</p>
+                <div className="text-center py-20 animate-in fade-in zoom-in duration-500">
+                    <div className="bg-base-200/50 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-base-content/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                    </div>
+                    <h3 className="text-xl font-bold text-base-content">No projects yet</h3>
+                    <p className="text-base-content/50 mt-2 max-w-sm mx-auto">Get started by creating your first project to organize tasks and collaborate with your team.</p>
+                    <button onClick={handleOpenCreate} className="btn btn-ghost text-primary mt-4 font-medium hover:bg-primary/10">
+                        Create your first project &rarr;
+                    </button>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {projects.map((project) => (
-                        <div key={project.id} className="card bg-base-100 shadow-xl border border-base-200 hover:shadow-2xl hover:border-primary/20 transition-all duration-300 group">
-                            <div className="card-body">
-                                <div className="flex justify-between items-start">
-                                    <div className="badge badge-ghost gap-2">{project.taskCount} Tasks</div>
-                                    <div className="text-xs text-base-content/50 font-medium">
-                                        {new Date(project.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-100">
+                    {projects.map((project, index) => (
+                        <div
+                            key={project.id}
+                            style={{ animationDelay: `${index * 100}ms` }}
+                            className="card bg-gradient-to-br from-base-100 to-base-200/50 shadow-sm border border-base-200/60 hover:shadow-xl hover:border-primary/20 transition-all duration-300 group hover:-translate-y-1 animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards"
+                        >
+                            <div className="card-body p-6">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className={`badge ${project.taskCount > 0 ? 'badge-primary badge-outline' : 'badge-ghost'} gap-2 font-medium`}>
+                                        {project.taskCount} {project.taskCount === 1 ? 'Task' : 'Tasks'}
+                                    </div>
+                                    <div className="text-xs text-base-content/40 font-medium">
+                                        {new Date(project.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
                                     </div>
                                 </div>
 
-                                <h2 className="card-title mt-2 text-lg text-base-content group-hover:text-primary transition-colors">
+                                <h2 className="card-title text-xl text-base-content group-hover:text-primary transition-colors cursor-pointer" onClick={() => handleOpenEdit(project)}>
                                     {project.name}
                                 </h2>
-                                <p className="text-sm text-base-content/70 mt-1 line-clamp-2">
-                                    {project.description}
+                                <p className="text-sm text-base-content/60 mt-2 line-clamp-2 leading-relaxed min-h-[2.5em]">
+                                    {project.description || "No description provided."}
                                 </p>
 
-                                <div className="mt-4 flex -space-x-2 overflow-hidden">
-                                    {project.assignedUsers.slice(0, 3).map((user) => {
-                                        const colors = [
-                                            'bg-primary text-primary-content',
-                                            'bg-secondary text-secondary-content',
-                                            'bg-accent text-accent-content',
-                                            'bg-info text-info-content',
-                                            'bg-success text-success-content',
-                                            'bg-warning text-warning-content',
-                                            'bg-error text-error-content',
-                                        ];
-                                        const hash = user.name.split('').reduce((acc, char) => char.charCodeAt(0) + acc, 0);
-                                        const colorClass = colors[hash % colors.length];
+                                <div className="mt-6 flex items-center justify-between">
+                                    <div className="flex -space-x-2 overflow-hidden ring-offset-2">
+                                        {project.assignedUsers.slice(0, 3).map((user) => {
+                                            const colors = [
+                                                'bg-indigo-500 text-white',
+                                                'bg-purple-500 text-white',
+                                                'bg-pink-500 text-white',
+                                                'bg-rose-500 text-white',
+                                                'bg-orange-500 text-white',
+                                                'bg-amber-500 text-white',
+                                                'bg-emerald-500 text-white',
+                                                'bg-teal-500 text-white',
+                                                'bg-cyan-500 text-white',
+                                                'bg-sky-500 text-white',
+                                                'bg-blue-500 text-white',
+                                            ];
+                                            const hash = user.name.split('').reduce((acc, char) => char.charCodeAt(0) + acc, 0);
+                                            const colorClass = colors[hash % colors.length];
 
-                                        return (
-                                            <div key={user.id} className="avatar tooltip" data-tip={user.name}>
-                                                <div className={`w-8 h-8 rounded-full border-2 border-base-100 ${colorClass} flex items-center justify-center text-xs font-bold`}>
-                                                    {user.avatar ? <img src={user.avatar} alt={user.name} /> : <span>{user.name.charAt(0).toUpperCase()}</span>}
+                                            return (
+                                                <div key={user.id} className="avatar tooltip tooltip-bottom" data-tip={user.name}>
+                                                    <div className={`w-8 h-8 rounded-full border-2 border-base-100 ${colorClass} flex items-center justify-center text-xs font-bold ring-2 ring-transparent group-hover:ring-base-100 transition-all`}>
+                                                        {user.avatar ? <img src={user.avatar} alt={user.name} /> : <span>{user.name.charAt(0).toUpperCase()}</span>}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        {project.assignedUsers.length > 3 && (
+                                            <div className="avatar placeholder">
+                                                <div className="w-8 h-8 rounded-full border-2 border-base-100 bg-base-200 text-base-content/60 text-xs font-bold flex items-center justify-center">
+                                                    <span>+{project.assignedUsers.length - 3}</span>
                                                 </div>
                                             </div>
-                                        );
-                                    })}
-                                    {project.assignedUsers.length > 3 && (
-                                        <div className="avatar placeholder">
-                                            <div className="w-8 h-8 rounded-full border-2 border-base-100 bg-base-200 text-black text-xs font-bold flex items-center justify-center">
-                                                <span>+{project.assignedUsers.length - 3}</span>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                                        )}
+                                        {project.assignedUsers.length === 0 && (
+                                            <div className="text-xs text-base-content/30 italic self-center ml-2">No members</div>
+                                        )}
+                                    </div>
 
-                                <div className="card-actions justify-end mt-6 pt-4 border-t border-base-200">
-                                    <button
-                                        onClick={() => handleOpenEdit(project)}
-                                        className="btn btn-ghost btn-sm btn-square tooltip"
-                                        data-tip="Edit"
-
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-base-content/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(project.id)}
-                                        className="btn btn-ghost btn-sm btn-square tooltip hover:bg-error/10 hover:text-error"
-                                        data-tip="Delete"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
+                                    <div className="flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleOpenEdit(project); }}
+                                            className="btn btn-ghost btn-xs btn-square tooltip"
+                                            data-tip="Edit"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }}
+                                            className="btn btn-ghost btn-xs btn-square text-error/70 hover:bg-error/10 hover:text-error tooltip"
+                                            data-tip="Delete"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -314,13 +337,11 @@ export default function ProjectsPage() {
 
             {/* Create Project Modal */}
             {isCreateOpen && (
-                <dialog className="modal modal-open">
-                    <div className="modal-box w-11/12 max-w-2xl bg-base-100 overflow-visible">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-lg">Create New Project</h3>
-                            <form method="dialog">
-                                <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => setIsCreateOpen(false)}>✕</button>
-                            </form>
+                <dialog className="modal modal-open modal-bottom sm:modal-middle">
+                    <div className="modal-box w-11/12 max-w-2xl bg-base-100 overflow-visible p-8 animate-in zoom-in duration-300">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-bold text-2xl text-base-content">Create New Project</h3>
+                            <button className="btn btn-sm btn-circle btn-ghost" onClick={() => setIsCreateOpen(false)}>✕</button>
                         </div>
 
                         <form onSubmit={handleCreateSubmit} className="space-y-4">
@@ -376,17 +397,17 @@ export default function ProjectsPage() {
                                 </div>
                             </div>
 
-                            <div className="modal-action mt-6">
-                                <button type="button" className="btn btn-ghost" onClick={() => setIsCreateOpen(false)}>
+                            <div className="modal-action mt-8">
+                                <button type="button" className="btn btn-ghost hover:bg-base-200" onClick={() => setIsCreateOpen(false)}>
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn btn-neutral text-white px-8">
+                                <button type="submit" className="btn btn-primary px-8 shadow-md">
                                     Create Project
                                 </button>
                             </div>
                         </form>
                     </div>
-                    <form method="dialog" className="modal-backdrop">
+                    <form method="dialog" className="modal-backdrop backdrop-blur-sm bg-base-300/30">
                         <button onClick={() => setIsCreateOpen(false)}>close</button>
                     </form>
                 </dialog>
@@ -394,13 +415,11 @@ export default function ProjectsPage() {
 
             {/* Edit Project Modal (Simplified) */}
             {isEditOpen && (
-                <dialog className="modal modal-open">
-                    <div className="modal-box w-11/12 max-w-2xl bg-base-100 overflow-visible">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-lg">Edit Project</h3>
-                            <form method="dialog">
-                                <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => setIsEditOpen(false)}>✕</button>
-                            </form>
+                <dialog className="modal modal-open modal-bottom sm:modal-middle">
+                    <div className="modal-box w-11/12 max-w-2xl bg-base-100 overflow-visible p-8 animate-in zoom-in duration-300">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-bold text-2xl text-base-content">Edit Project</h3>
+                            <button className="btn btn-sm btn-circle btn-ghost" onClick={() => setIsEditOpen(false)}>✕</button>
                         </div>
                         <form onSubmit={handleEditSubmit} className="space-y-4">
                             <div className="form-control w-full">
@@ -450,33 +469,33 @@ export default function ProjectsPage() {
                                     ))}
                                 </div>
                             </div>
-                            <div className="modal-action mt-6">
-                                <button type="button" className="btn btn-ghost" onClick={() => setIsEditOpen(false)}>
+                            <div className="modal-action mt-8">
+                                <button type="button" className="btn btn-ghost hover:bg-base-200" onClick={() => setIsEditOpen(false)}>
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn btn-neutral text-white px-8">
+                                <button type="submit" className="btn btn-primary px-8 shadow-md">
                                     Save Changes
                                 </button>
                             </div>
                         </form>
                     </div>
-                    <form method="dialog" className="modal-backdrop">
+                    <form method="dialog" className="modal-backdrop backdrop-blur-sm bg-base-300/30">
                         <button onClick={() => setIsEditOpen(false)}>close</button>
                     </form>
                 </dialog>
             )}
             {/* Delete Confirmation Modal */}
             {deleteId && (
-                <dialog className="modal modal-open">
-                    <div className="modal-box bg-base-100">
+                <dialog className="modal modal-open modal-bottom sm:modal-middle">
+                    <div className="modal-box bg-base-100 animate-in zoom-in duration-300">
                         <h3 className="font-bold text-lg text-error">Confirm Delete</h3>
                         <p className="py-4">Are you sure you want to delete this project? This action cannot be undone.</p>
                         <div className="modal-action">
-                            <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
-                            <button className="btn btn-error text-white" onClick={confirmDelete}>Delete</button>
+                            <button className="btn btn-ghost hover:bg-base-200" onClick={() => setDeleteId(null)}>Cancel</button>
+                            <button className="btn btn-error text-white shadow-md" onClick={confirmDelete}>Delete Project</button>
                         </div>
                     </div>
-                    <form method="dialog" className="modal-backdrop">
+                    <form method="dialog" className="modal-backdrop backdrop-blur-sm bg-base-300/30">
                         <button onClick={() => setDeleteId(null)}>close</button>
                     </form>
                 </dialog>

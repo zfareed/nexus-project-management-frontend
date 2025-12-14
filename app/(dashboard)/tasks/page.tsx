@@ -121,24 +121,24 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData, title, submitLabel,
     };
 
     return (
-        <div className="modal modal-open z-50">
-            <div className="modal-box w-11/12 max-w-lg shadow-2xl overflow-visible">
-                <h3 className="font-bold text-lg mb-6">{title}</h3>
-                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="modal modal-open z-50 modal-bottom sm:modal-middle">
+            <div className="modal-box w-11/12 max-w-2xl bg-base-100 shadow-2xl overflow-visible p-8 animate-in zoom-in duration-300">
+                <h3 className="font-bold text-2xl mb-6 text-base-content">{title}</h3>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                     <div className="form-control w-full">
                         <label className="label">
                             <span className="label-text font-medium text-base-content/70">Title</span>
                         </label>
                         <input
                             type="text"
-                            className="input input-bordered w-full focus:input-primary"
+                            placeholder="e.g. Implement Login Page"
+                            className="input input-bordered w-full focus:input-primary transition-all duration-300"
                             value={formData.title}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                             required
                         />
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div className="form-control w-full">
                             <label className="label">
                                 <span className="label-text font-medium text-base-content/70">Project</span>
@@ -233,17 +233,17 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData, title, submitLabel,
                         ></textarea>
                     </div>
 
-                    <div className="modal-action mt-6">
-                        <button type="button" className="btn btn-ghost" onClick={onClose}>
+                    <div className="modal-action mt-8">
+                        <button type="button" className="btn btn-ghost hover:bg-base-200" onClick={onClose}>
                             Cancel
                         </button>
-                        <button type="submit" className="btn btn-primary px-6">
+                        <button type="submit" className="btn btn-primary px-8 shadow-md">
                             {submitLabel}
                         </button>
                     </div>
                 </form>
             </div>
-            <div className="modal-backdrop bg-neutral/40 backdrop-blur-sm" onClick={onClose}></div>
+            <div className="modal-backdrop bg-neutral/60 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
         </div>
     );
 };
@@ -260,15 +260,15 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, itemName }: Delet
 
     return (
         <div className="modal modal-open z-50">
-            <div className="modal-box w-11/12 max-w-sm shadow-2xl">
+            <div className="modal-box w-11/12 max-w-sm shadow-2xl animate-in zoom-in duration-300">
                 <h3 className="font-bold text-lg text-error">Delete {itemName}</h3>
-                <p className="py-4">Are you sure you want to delete this {itemName}? This action cannot be undone.</p>
+                <p className="py-4 text-base-content/80">Are you sure you want to delete this {itemName}? This action cannot be undone.</p>
                 <div className="modal-action">
-                    <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-                    <button className="btn btn-error" onClick={onConfirm}>Delete</button>
+                    <button className="btn btn-ghost hover:bg-base-200" onClick={onClose}>Cancel</button>
+                    <button className="btn btn-error text-white shadow-md" onClick={onConfirm}>Delete</button>
                 </div>
             </div>
-            <div className="modal-backdrop bg-neutral/40 backdrop-blur-sm" onClick={onClose}></div>
+            <div className="modal-backdrop bg-neutral/60 backdrop-blur-sm" onClick={onClose}></div>
         </div>
     );
 };
@@ -406,13 +406,13 @@ export default function TasksPage() {
     return (
         <div className="p-6 lg:p-10 bg-base-200 min-h-screen">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4 animate-in fade-in slide-in-from-top-1 duration-700">
                 <div>
                     <h1 className="text-4xl font-extrabold tracking-tight text-base-content">Tasks</h1>
                     <p className="text-base-content/60 mt-2 text-lg">Manage your project tasks and track progress effectively.</p>
                 </div>
                 <button
-                    className="btn btn-primary gap-2 shadow-lg btn-lg"
+                    className="btn btn-primary gap-2 shadow-lg hover:shadow-primary/50 btn-lg text-white bg-gradient-to-r from-primary to-primary-focus border-none transition-all duration-300 transform hover:-translate-y-0.5"
                     onClick={() => setIsCreateOpen(true)}
                 >
                     <PlusIcon />
@@ -438,9 +438,13 @@ export default function TasksPage() {
                         </div>
 
                         {/* Column Area */}
-                        <div className="bg-base-100/40 backdrop-blur-sm rounded-2xl p-4 min-h-[500px] flex flex-col gap-4 border border-base-content/5">
-                            {columns[status].map((task) => (
-                                <div key={task.id} className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-xl hover:border-primary/20 transition-all duration-300 group cursor-pointer">
+                        <div className="bg-base-100/40 backdrop-blur-sm rounded-2xl p-4 min-h-[500px] flex flex-col gap-4 border border-base-content/5 animate-in slide-in-from-bottom-2 duration-700 fill-mode-backwards" style={{ animationDelay: `${Object.keys(columns).indexOf(status) * 150}ms` }}>
+                            {columns[status].map((task, index) => (
+                                <div
+                                    key={task.id}
+                                    className="card bg-gradient-to-br from-base-100 to-base-200/50 shadow-sm border border-base-200/60 hover:shadow-xl hover:border-primary/20 transition-all duration-300 group cursor-pointer hover:-translate-y-1 animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards"
+                                    style={{ animationDelay: `${Object.keys(columns).indexOf(status) * 100 + index * 50}ms` }}
+                                >
                                     <div className="card-body p-5 gap-3">
                                         <div className="flex justify-between items-start gap-2">
                                             <h3
@@ -476,19 +480,37 @@ export default function TasksPage() {
                                         <div className="flex items-center justify-between mt-auto pt-2 border-t border-base-200/50">
                                             <PriorityBadge priority={task.priority} />
 
-                                            {task.assignee && (
-                                                <div className="tooltip tooltip-left" data-tip={`Assigned to ${task.assignee.name}`}>
-                                                    <div className="avatar placeholder">
-                                                        <div className="w-8 h-8 rounded-full ring-2 ring-base-100 bg-neutral-focus text-neutral-content">
-                                                            {task.assignee.avatar ? (
-                                                                <img src={task.assignee.avatar} alt={task.assignee.name} />
-                                                            ) : (
-                                                                <span>{task.assignee.name.charAt(0)}</span>
-                                                            )}
+                                            {task.assignee && (() => {
+                                                const colors = [
+                                                    'bg-indigo-500 text-white',
+                                                    'bg-purple-500 text-white',
+                                                    'bg-pink-500 text-white',
+                                                    'bg-rose-500 text-white',
+                                                    'bg-orange-500 text-white',
+                                                    'bg-amber-500 text-white',
+                                                    'bg-emerald-500 text-white',
+                                                    'bg-teal-500 text-white',
+                                                    'bg-cyan-500 text-white',
+                                                    'bg-sky-500 text-white',
+                                                    'bg-blue-500 text-white',
+                                                ];
+                                                const hash = task.assignee.name.split('').reduce((acc, char) => char.charCodeAt(0) + acc, 0);
+                                                const colorClass = colors[hash % colors.length];
+
+                                                return (
+                                                    <div className="tooltip tooltip-left" data-tip={`Assigned to ${task.assignee.name}`}>
+                                                        <div className="avatar placeholder">
+                                                            <div className={`w-8 h-8 rounded-full ring-2 ring-base-100 ${colorClass} flex items-center justify-center text-xs font-bold`}>
+                                                                {task.assignee.avatar ? (
+                                                                    <img src={task.assignee.avatar} alt={task.assignee.name} />
+                                                                ) : (
+                                                                    <span>{task.assignee.name.charAt(0).toUpperCase()}</span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            )}
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 </div>
