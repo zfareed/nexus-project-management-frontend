@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import api from '@/lib/axios';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -22,26 +23,30 @@ export default function LoginPage() {
         setIsLoading(true);
 
         try {
-            // Simulate API delay
-            await new Promise((resolve) => setTimeout(resolve, 800));
+            const response = await api.post('/auth/login', {
+                email,
+                password,
+            });
 
-            if (email === 'admin@nexus.com' && password === 'admin123') {
-                router.push('/'); // Redirect to dashboard
-            } else if (email === 'user@nexus.com' && password === 'user123') {
-                router.push('/'); // Redirect to dashboard
-            } else {
-                setError('Invalid email or password');
-                setIsLoading(false);
-            }
-        } catch (err) {
-            setError('Something went wrong. Please try again.');
+            const data = response.data;
+
+            // Store token and user data
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+
+            // Redirect to dashboard
+            router.push('/');
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.message || err.message || 'Something went wrong. Please try again.';
+            setError(errorMessage);
+        } finally {
             setIsLoading(false);
         }
     };
 
     const fillDemoAdmin = () => {
-        setEmail('admin@nexus.com');
-        setPassword('admin123');
+        setEmail('admin@demo.com');
+        setPassword('admin@123');
     };
 
     const fillDemoUser = () => {
@@ -63,7 +68,7 @@ export default function LoginPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                             </svg>
                         </div>
-                        <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">Welcome Back</h1>
+                        <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">Nexus</h1>
                         <p className="text-base-content/60 font-medium">Sign in to access your dashboard</p>
                     </div>
 

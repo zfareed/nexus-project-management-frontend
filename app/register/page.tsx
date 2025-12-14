@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import api from '@/lib/axios';
 import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
@@ -50,24 +51,13 @@ export default function RegisterPage() {
         }
 
         try {
-            const response = await fetch('http://localhost:3000/auth/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    name: formData.fullName,
-                    email: formData.email,
-                    password: formData.password,
-                }),
+            const response = await api.post('/auth/register', {
+                name: formData.fullName,
+                email: formData.email,
+                password: formData.password,
             });
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                // Handle specific error messages from backend if available
-                throw new Error(data.message || 'Registration failed');
-            }
+            const data = response.data;
 
             setSuccess('Account created successfully! Redirecting...');
 
@@ -81,7 +71,8 @@ export default function RegisterPage() {
             }, 1000);
         } catch (err: any) {
             console.error('Registration error:', err);
-            setError(err.message || 'Failed to create account. Please try again.');
+            const errorMessage = err.response?.data?.message || err.message || 'Failed to create account. Please try again.';
+            setError(errorMessage);
         } finally {
             setIsLoading(false);
         }
