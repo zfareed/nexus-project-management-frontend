@@ -2,14 +2,31 @@
 
 import React, { useState } from 'react';
 
+
 // Mock Data Type
+// Mock Data Type
+type User = {
+    id: string;
+    name: string;
+    role: 'ADMIN' | 'USER';
+    avatar: string;
+};
+
 type Project = {
     id: string;
     name: string;
     description: string;
     status: 'Active' | 'Completed' | 'On Hold';
     createdAt: string;
+
+    teamMembers: string[]; // User IDs
 };
+
+const mockUsers: User[] = [
+    { id: '1', name: 'Alice Admin', role: 'ADMIN', avatar: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp' },
+    { id: '2', name: 'Bob Builder', role: 'USER', avatar: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp' }, // Placeholder avatars
+    { id: '3', name: 'Charlie Checker', role: 'USER', avatar: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp' },
+];
 
 // Initial Mock Data
 const initialProjects: Project[] = [
@@ -19,6 +36,8 @@ const initialProjects: Project[] = [
         description: 'Revamping the corporate website with a fresh modern look and improved UX.',
         status: 'Active',
         createdAt: '2023-10-24',
+
+        teamMembers: ['1', '2'],
     },
     {
         id: '2',
@@ -26,6 +45,8 @@ const initialProjects: Project[] = [
         description: 'Building a cross-platform mobile application for iOS and Android using Flutter.',
         status: 'On Hold',
         createdAt: '2023-09-15',
+
+        teamMembers: ['2', '3'],
     },
     {
         id: '3',
@@ -33,29 +54,12 @@ const initialProjects: Project[] = [
         description: 'Q4 marketing strategy including social media, email newsletters, and paid ads.',
         status: 'Completed',
         createdAt: '2023-08-01',
-    },
-    {
-        id: '4',
-        name: 'Internal Dashboard',
-        description: 'Creating an analytics dashboard for the internal sales team to track performance.',
-        status: 'Active',
-        createdAt: '2023-11-10',
-    },
-    {
-        id: '5',
-        name: 'Legacy System Migration',
-        description: 'Migrating old database systems to a cloud-based infrastructure.',
-        status: 'Active',
-        createdAt: '2023-11-05',
-    },
-    {
-        id: '6',
-        name: 'Client Portal',
-        description: 'Secure portal for clients to access their invoices and project status updates.',
-        status: 'Completed',
-        createdAt: '2023-07-20',
+
+        teamMembers: ['1', '3'],
     },
 ];
+
+
 
 const StatusBadge = ({ status }: { status: Project['status'] }) => {
     let colorClass = 'badge-ghost';
@@ -84,14 +88,24 @@ export default function ProjectsPage() {
         name: string;
         description: string;
         status: Project['status'];
+
+        teamMembers: string[];
     }>({
         name: '',
         description: '',
         status: 'Active',
+
+        teamMembers: [],
     });
 
     const resetForm = () => {
-        setFormData({ name: '', description: '', status: 'Active' });
+        setFormData({
+            name: '',
+            description: '',
+            status: 'Active',
+
+            teamMembers: [],
+        });
         setCurrentProject(null);
     };
 
@@ -106,8 +120,21 @@ export default function ProjectsPage() {
             name: project.name,
             description: project.description,
             status: project.status,
+
+            teamMembers: project.teamMembers,
         });
         setIsEditOpen(true);
+    };
+
+    const toggleTeamMember = (userId: string) => {
+        setFormData(prev => {
+            const isSelected = prev.teamMembers.includes(userId);
+            if (isSelected) {
+                return { ...prev, teamMembers: prev.teamMembers.filter(id => id !== userId) };
+            } else {
+                return { ...prev, teamMembers: [...prev.teamMembers, userId] };
+            }
+        });
     };
 
     const handleCreateSubmit = (e: React.FormEvent) => {
@@ -120,6 +147,8 @@ export default function ProjectsPage() {
             description: formData.description,
             status: formData.status,
             createdAt: new Date().toISOString(),
+
+            teamMembers: formData.teamMembers,
         };
 
         setProjects([newProject, ...projects]);
@@ -219,55 +248,93 @@ export default function ProjectsPage() {
             {/* Create Project Modal */}
             {isCreateOpen && (
                 <dialog className="modal modal-open">
-                    <div className="modal-box">
-                        <h3 className="font-bold text-lg mb-4">Create New Project</h3>
-                        <form onSubmit={handleCreateSubmit}>
-                            <div className="form-control w-full mb-4">
-                                <label className="label">
-                                    <span className="label-text font-medium">Project Name <span className="text-error">*</span></span>
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. Website Overhaul"
-                                    className="input input-bordered w-full"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    required
-                                />
+                    <div className="modal-box w-11/12 max-w-2xl bg-base-100 overflow-visible">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-lg">Create New Project</h3>
+                            <form method="dialog">
+                                <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => setIsCreateOpen(false)}>✕</button>
+                            </form>
+                        </div>
+
+                        <form onSubmit={handleCreateSubmit} className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="form-control w-full">
+                                    <label className="label">
+                                        <span className="label-text font-medium text-base-content/70">Project Name</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Q4 Marketing"
+                                        className="input input-bordered w-full"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-control w-full">
+                                    <label className="label">
+                                        <span className="label-text font-medium text-base-content/70">Status</span>
+                                    </label>
+                                    <select
+                                        className="select select-bordered w-full"
+                                        value={formData.status}
+                                        onChange={(e) => setFormData({ ...formData, status: e.target.value as Project['status'] })}
+                                    >
+                                        <option value="Active">Active</option>
+                                        <option value="On Hold">On Hold</option>
+                                        <option value="Completed">Completed</option>
+                                    </select>
+                                </div>
                             </div>
 
-                            <div className="form-control w-full mb-4">
+                            <div className="form-control w-full">
                                 <label className="label">
-                                    <span className="label-text font-medium">Description</span>
+                                    <span className="label-text font-medium text-base-content/70">Description</span>
                                 </label>
                                 <textarea
-                                    className="textarea textarea-bordered h-24"
-                                    placeholder="Brief description of the project..."
+                                    className="textarea textarea-bordered h-24 w-full"
+                                    placeholder="Describe the project goals and scope..."
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 ></textarea>
                             </div>
 
-                            <div className="form-control w-full mb-6">
+
+
+                            <div className="form-control w-full">
                                 <label className="label">
-                                    <span className="label-text font-medium">Status</span>
+                                    <span className="label-text font-medium text-base-content/70">Team Members</span>
                                 </label>
-                                <select
-                                    className="select select-bordered"
-                                    value={formData.status}
-                                    onChange={(e) => setFormData({ ...formData, status: e.target.value as Project['status'] })}
-                                >
-                                    <option value="Active">Active</option>
-                                    <option value="On Hold">On Hold</option>
-                                    <option value="Completed">Completed</option>
-                                </select>
+                                <div className="border border-base-200 rounded-lg max-h-48 overflow-y-auto">
+                                    {mockUsers.map(user => (
+                                        <div key={user.id} className="flex items-center justify-between p-3 border-b border-base-200 last:border-b-0 hover:bg-base-200/50 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <div className="avatar">
+                                                    <div className="w-10 rounded-full">
+                                                        <img src={user.avatar} alt={user.name} />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div className="font-medium text-sm">{user.name}</div>
+                                                    <div className="text-xs text-base-content/50 uppercase">{user.role}</div>
+                                                </div>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                className="checkbox checkbox-primary"
+                                                checked={formData.teamMembers.includes(user.id)}
+                                                onChange={() => toggleTeamMember(user.id)}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
 
-                            <div className="modal-action">
-                                <button type="button" className="btn" onClick={() => setIsCreateOpen(false)}>
+                            <div className="modal-action mt-6">
+                                <button type="button" className="btn btn-ghost" onClick={() => setIsCreateOpen(false)}>
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn btn-primary text-white">
+                                <button type="submit" className="btn btn-neutral text-white px-8">
                                     Create Project
                                 </button>
                             </div>
@@ -282,55 +349,93 @@ export default function ProjectsPage() {
             {/* Edit Project Modal */}
             {isEditOpen && (
                 <dialog className="modal modal-open">
-                    <div className="modal-box">
-                        <h3 className="font-bold text-lg mb-4">Edit Project</h3>
-                        <form onSubmit={handleEditSubmit}>
-                            <div className="form-control w-full mb-4">
-                                <label className="label">
-                                    <span className="label-text font-medium">Project Name <span className="text-error">*</span></span>
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. Website Overhaul"
-                                    className="input input-bordered w-full"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    required
-                                />
+                    <div className="modal-box w-11/12 max-w-2xl bg-base-100 overflow-visible">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-lg">Edit Project</h3>
+                            <form method="dialog">
+                                <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => setIsEditOpen(false)}>✕</button>
+                            </form>
+                        </div>
+                        <form onSubmit={handleEditSubmit} className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="form-control w-full">
+                                    <label className="label">
+                                        <span className="label-text font-medium text-base-content/70">Project Name</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Q4 Marketing"
+                                        className="input input-bordered w-full"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-control w-full">
+                                    <label className="label">
+                                        <span className="label-text font-medium text-base-content/70">Status</span>
+                                    </label>
+                                    <select
+                                        className="select select-bordered w-full"
+                                        value={formData.status}
+                                        onChange={(e) => setFormData({ ...formData, status: e.target.value as Project['status'] })}
+                                    >
+                                        <option value="Active">Active</option>
+                                        <option value="On Hold">On Hold</option>
+                                        <option value="Completed">Completed</option>
+                                    </select>
+                                </div>
                             </div>
 
-                            <div className="form-control w-full mb-4">
+                            <div className="form-control w-full">
                                 <label className="label">
-                                    <span className="label-text font-medium">Description</span>
+                                    <span className="label-text font-medium text-base-content/70">Description</span>
                                 </label>
                                 <textarea
-                                    className="textarea textarea-bordered h-24"
-                                    placeholder="Brief description of the project..."
+                                    className="textarea textarea-bordered h-24 w-full"
+                                    placeholder="Describe the project goals and scope..."
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 ></textarea>
                             </div>
 
-                            <div className="form-control w-full mb-6">
+
+
+
+                            <div className="form-control w-full">
                                 <label className="label">
-                                    <span className="label-text font-medium">Status</span>
+                                    <span className="label-text font-medium text-base-content/70">Team Members</span>
                                 </label>
-                                <select
-                                    className="select select-bordered"
-                                    value={formData.status}
-                                    onChange={(e) => setFormData({ ...formData, status: e.target.value as Project['status'] })}
-                                >
-                                    <option value="Active">Active</option>
-                                    <option value="On Hold">On Hold</option>
-                                    <option value="Completed">Completed</option>
-                                </select>
+                                <div className="border border-base-200 rounded-lg max-h-48 overflow-y-auto">
+                                    {mockUsers.map(user => (
+                                        <div key={user.id} className="flex items-center justify-between p-3 border-b border-base-200 last:border-b-0 hover:bg-base-200/50 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <div className="avatar">
+                                                    <div className="w-10 rounded-full">
+                                                        <img src={user.avatar} alt={user.name} />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div className="font-medium text-sm">{user.name}</div>
+                                                    <div className="text-xs text-base-content/50 uppercase">{user.role}</div>
+                                                </div>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                className="checkbox checkbox-primary"
+                                                checked={formData.teamMembers.includes(user.id)}
+                                                onChange={() => toggleTeamMember(user.id)}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
 
-                            <div className="modal-action">
-                                <button type="button" className="btn" onClick={() => setIsEditOpen(false)}>
+                            <div className="modal-action mt-6">
+                                <button type="button" className="btn btn-ghost" onClick={() => setIsEditOpen(false)}>
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn btn-primary text-white">
+                                <button type="submit" className="btn btn-neutral text-white px-8">
                                     Save Changes
                                 </button>
                             </div>
