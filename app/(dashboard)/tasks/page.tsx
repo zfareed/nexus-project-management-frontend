@@ -48,6 +48,26 @@ const TrashIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
 );
 
+const SearchIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+);
+
+const UserIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+);
+
+const FolderIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
+);
+
+const FlagIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" /></svg>
+);
+
+const FilterIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
+);
+
 const PriorityBadge = ({ priority }: { priority: Priority }) => {
     const colors = {
         LOW: 'badge-info',
@@ -286,6 +306,12 @@ export default function TasksPage() {
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
 
+    // Search & Filter State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterPriority, setFilterPriority] = useState<Priority | 'ALL'>('ALL');
+    const [filterProjectId, setFilterProjectId] = useState<string>('ALL');
+    const [filterAssigneeId, setFilterAssigneeId] = useState<string>('ALL');
+
     const fetchTasks = async () => {
         try {
             setLoading(true);
@@ -317,13 +343,40 @@ export default function TasksPage() {
 
     const columns = useMemo(() => {
         const cols: Record<Status, Task[]> = { 'TODO': [], 'IN_PROGRESS': [], 'REVIEW': [], 'DONE': [] };
-        tasks.forEach(task => {
+
+        let filteredTasks = tasks;
+
+        // Apply Search
+        if (searchQuery) {
+            const lowerQuery = searchQuery.toLowerCase();
+            filteredTasks = filteredTasks.filter(task =>
+                task.title.toLowerCase().includes(lowerQuery) ||
+                task.description.toLowerCase().includes(lowerQuery)
+            );
+        }
+
+        // Apply Priority Filter
+        if (filterPriority !== 'ALL') {
+            filteredTasks = filteredTasks.filter(task => task.priority === filterPriority);
+        }
+
+        // Apply Project Filter
+        if (filterProjectId !== 'ALL') {
+            filteredTasks = filteredTasks.filter(task => task.projectId === filterProjectId);
+        }
+
+        // Apply Assignee Filter
+        if (filterAssigneeId !== 'ALL') {
+            filteredTasks = filteredTasks.filter(task => task.assigneeId === filterAssigneeId);
+        }
+
+        filteredTasks.forEach(task => {
             if (cols[task.status]) {
                 cols[task.status].push(task);
             }
         });
         return cols;
-    }, [tasks]);
+    }, [tasks, searchQuery, filterPriority, filterProjectId, filterAssigneeId]);
 
     const handleCreate = async (newTaskData: Partial<Task>) => {
         try {
@@ -419,6 +472,82 @@ export default function TasksPage() {
                     <PlusIcon />
                     Create Task
                 </button>
+            </div>
+
+            {/* Filters & Search */}
+            <div className="flex flex-col xl:flex-row gap-6 mb-10 bg-base-100/70 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-base-200/60 sticky top-4 z-30 animate-in fade-in slide-in-from-top-2 duration-700">
+                <div className="flex-1">
+                    <div className="relative group">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40 group-focus-within:text-primary transition-colors duration-300">
+                            <SearchIcon />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Search tasks..."
+                            className="input input-lg w-full pl-12 bg-base-100 border-base-200 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all duration-300 shadow-sm"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 overflow-x-auto pb-2 sm:pb-0 items-center">
+                    <div className="flex items-center gap-2 text-sm font-medium text-base-content/60 mr-2 hidden xl:flex">
+                        <FilterIcon />
+                        <span>Filters:</span>
+                    </div>
+
+                    {/* Priority Filter */}
+                    <div className="relative w-full sm:w-auto">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 pointer-events-none z-10">
+                            <FlagIcon />
+                        </div>
+                        <select
+                            className="select select-bordered w-full sm:w-[180px] pl-10 focus:select-primary cursor-pointer transition-colors h-12"
+                            value={filterPriority}
+                            onChange={(e) => setFilterPriority(e.target.value as Priority | 'ALL')}
+                        >
+                            <option value="ALL">All Priorities</option>
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HIGH">High</option>
+                        </select>
+                    </div>
+
+                    {/* Project Filter */}
+                    <div className="relative w-full sm:w-auto">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 pointer-events-none z-10">
+                            <FolderIcon />
+                        </div>
+                        <select
+                            className="select select-bordered w-full sm:w-[180px] pl-10 focus:select-primary cursor-pointer transition-colors h-12"
+                            value={filterProjectId}
+                            onChange={(e) => setFilterProjectId(e.target.value)}
+                        >
+                            <option value="ALL">All Projects</option>
+                            {projects.map((project) => (
+                                <option key={project.id} value={project.id}>{project.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Assignee Filter */}
+                    <div className="relative w-full sm:w-auto">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 pointer-events-none z-10">
+                            <UserIcon />
+                        </div>
+                        <select
+                            className="select select-bordered w-full sm:w-[180px] pl-10 focus:select-primary cursor-pointer transition-colors h-12"
+                            value={filterAssigneeId}
+                            onChange={(e) => setFilterAssigneeId(e.target.value)}
+                        >
+                            <option value="ALL">All Assignees</option>
+                            {users.map((user) => (
+                                <option key={user.id} value={user.id}>{user.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
             </div>
 
             {/* Kanban Board */}
