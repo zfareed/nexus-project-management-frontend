@@ -89,7 +89,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
 
             {/* Sidebar */}
-            <div className="drawer-side z-20">
+            <div className="drawer-side z-40">
                 <label htmlFor="dashboard-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
                 <div className="min-h-full w-80 bg-[#0f172a] text-white flex flex-col">
                     {/* Sidebar Header */}
@@ -131,6 +131,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                     <Link
                                         href={item.href}
                                         className={`${isActive ? 'bg-primary text-white' : 'hover:bg-white/10 hover:text-white'} flex gap-3`}
+                                        onClick={() => {
+                                            const drawerCheckbox = document.getElementById('dashboard-drawer') as HTMLInputElement;
+                                            if (drawerCheckbox) {
+                                                drawerCheckbox.checked = false;
+                                            }
+                                        }}
                                     >
                                         {item.icon}
                                         {item.name}
