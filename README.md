@@ -49,6 +49,32 @@ The application will start on **port 3001**.
 Open [http://localhost:3001](http://localhost:3001) with your browser to see the result.
 
 
+## 🧪 Testing
+
+This project uses [Jest](https://jestjs.io/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) for unit and integration testing.
+
+To run the tests:
+
+```bash
+npm test
+```
+
+To run tests in watch mode:
+
+```bash
+npm test -- --watch
+```
+
+## 🔄 CI/CD Pipeline
+
+This project uses [GitHub Actions](https://github.com/features/actions) for Continuous Integration and Continuous Deployment.
+
+The pipeline is defined in `.github/workflows/ci.yml` and performs the following checks on every push to the `master` branch:
+1.  **Checkout Code:** Retrieves the latest code from the repository.
+2.  **Setup Node.js:** Installs Node.js version 22.
+3.  **Install Dependencies:** Installs project dependencies using `npm ci`.
+4.  **Run Tests:** Executes the test suite to ensure code quality and prevent regression.
+
 ## 🛠️ Built With
 
 - **Framework:** [Next.js 16](https://nextjs.org/)
