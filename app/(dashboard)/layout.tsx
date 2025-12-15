@@ -10,6 +10,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const router = useRouter();
 
     const [isAuthChecking, setIsAuthChecking] = React.useState(true);
+    const [user, setUser] = React.useState<{ name: string; email: string; role?: string } | null>(null);
 
     React.useEffect(() => {
         const token = localStorage.getItem('token');
@@ -17,6 +18,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             router.push('/login');
         } else {
             setIsAuthChecking(false);
+            const userData = localStorage.getItem('user');
+            if (userData) {
+                setUser(JSON.parse(userData));
+            }
         }
     }, [router]);
 
@@ -106,8 +111,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             </div>
                         </div>
                         <div>
-                            <div className="font-bold text-lg">Alice Admin</div>
-                            <div className="text-xs text-white/50 uppercase tracking-wider">Admin</div>
+                            <div className="font-bold text-lg">{user?.name || 'User'}</div>
+                            <div className="text-xs text-white/50 uppercase tracking-wider">{user?.role || 'Member'}</div>
                         </div>
                     </div>
 
@@ -131,7 +136,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                     {/* Sidebar Footer */}
                     <div className="mt-auto p-4 border-t border-white/10">
-                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-left">
+                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-left cursor-pointer">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
                             </svg>

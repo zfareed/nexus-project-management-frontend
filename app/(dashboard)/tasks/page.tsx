@@ -312,6 +312,8 @@ export default function TasksPage() {
     const [filterProjectId, setFilterProjectId] = useState<string>('ALL');
     const [filterAssigneeId, setFilterAssigneeId] = useState<string>('ALL');
 
+    const [currentUser, setCurrentUser] = useState<{ role: 'ADMIN' | 'USER' } | null>(null);
+
     const fetchTasks = async () => {
         try {
             setLoading(true);
@@ -339,6 +341,14 @@ export default function TasksPage() {
 
     useEffect(() => {
         fetchTasks();
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            try {
+                setCurrentUser(JSON.parse(storedUser));
+            } catch (e) {
+                console.error("Failed to parse user from local storage", e);
+            }
+        }
     }, []);
 
     const columns = useMemo(() => {
@@ -465,13 +475,15 @@ export default function TasksPage() {
                     <h1 className="text-3xl font-bold tracking-tight text-base-content">Tasks</h1>
                     <p className="text-base-content/60 mt-2 text-lg">Manage your project tasks and track progress effectively.</p>
                 </div>
-                <button
-                    className="btn btn-primary gap-2 shadow-lg hover:shadow-primary/50 btn-lg text-white bg-gradient-to-r from-primary to-primary-focus border-none transition-all duration-300 transform hover:-translate-y-0.5"
-                    onClick={() => setIsCreateOpen(true)}
-                >
-                    <PlusIcon />
-                    Create Task
-                </button>
+                {currentUser?.role === 'ADMIN' && (
+                    <button
+                        className="btn btn-primary gap-2 shadow-lg hover:shadow-primary/50 btn-lg text-white bg-gradient-to-r from-primary to-primary-focus border-none transition-all duration-300 transform hover:-translate-y-0.5"
+                        onClick={() => setIsCreateOpen(true)}
+                    >
+                        <PlusIcon />
+                        Create Task
+                    </button>
+                )}
             </div>
 
             {/* Filters & Search */}
@@ -581,27 +593,29 @@ export default function TasksPage() {
                                     <div className="card-body p-5 gap-3">
                                         <div className="flex justify-between items-start gap-2">
                                             <h3
-                                                className="font-bold text-lg leading-snug cursor-pointer hover:text-primary transition-colors"
-                                                onClick={() => handleEditClick(task.id)}
+                                                className={`font-bold text-lg leading-snug cursor-pointer ${currentUser?.role === 'ADMIN' ? 'hover:text-primary' : ''} transition-colors`}
+                                                onClick={() => currentUser?.role === 'ADMIN' && handleEditClick(task.id)}
                                             >
                                                 {task.title}
                                             </h3>
-                                            <div className="lg:opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5">
-                                                <button
-                                                    className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:text-primary"
-                                                    onClick={() => handleEditClick(task.id)}
-                                                    aria-label="Edit Task"
-                                                >
-                                                    <EditIcon />
-                                                </button>
-                                                <button
-                                                    className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:text-error"
-                                                    onClick={() => handleDelete(task.id)}
-                                                    aria-label="Delete Task"
-                                                >
-                                                    <TrashIcon />
-                                                </button>
-                                            </div>
+                                            {currentUser?.role === 'ADMIN' && (
+                                                <div className="lg:opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5">
+                                                    <button
+                                                        className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:text-primary"
+                                                        onClick={() => handleEditClick(task.id)}
+                                                        aria-label="Edit Task"
+                                                    >
+                                                        <EditIcon />
+                                                    </button>
+                                                    <button
+                                                        className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:text-error"
+                                                        onClick={() => handleDelete(task.id)}
+                                                        aria-label="Delete Task"
+                                                    >
+                                                        <TrashIcon />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <p className="text-sm text-base-content/70 line-clamp-3 mb-2">{task.description}</p>

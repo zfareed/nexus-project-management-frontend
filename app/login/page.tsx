@@ -50,8 +50,8 @@ export default function LoginPage() {
     };
 
     const fillDemoUser = () => {
-        setEmail('user@nexus.com');
-        setPassword('user123');
+        setEmail('user@demo.com');
+        setPassword('user@123');
     };
 
     return (

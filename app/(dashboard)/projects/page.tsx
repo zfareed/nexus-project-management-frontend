@@ -44,6 +44,8 @@ export default function ProjectsPage() {
         userIds: [],
     });
 
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -63,6 +65,14 @@ export default function ProjectsPage() {
 
     useEffect(() => {
         fetchData();
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            try {
+                setCurrentUser(JSON.parse(storedUser));
+            } catch (e) {
+                console.error("Failed to parse user from local storage", e);
+            }
+        }
     }, []);
 
     const resetForm = () => {
@@ -219,15 +229,17 @@ export default function ProjectsPage() {
                     <h1 className="text-3xl font-bold tracking-tight text-base-content">Projects</h1>
                     <p className="text-base-content/60 mt-2 text-lg">Manage and track your ongoing projects with ease.</p>
                 </div>
-                <button
-                    onClick={handleOpenCreate}
-                    className="btn btn-primary bg-gradient-to-r from-primary to-primary-focus border-none hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 transform hover:-translate-y-0.5 text-white"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Create Project
-                </button>
+                {currentUser?.role === 'ADMIN' && (
+                    <button
+                        onClick={handleOpenCreate}
+                        className="btn btn-primary bg-gradient-to-r from-primary to-primary-focus border-none hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 transform hover:-translate-y-0.5 text-white"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Create Project
+                    </button>
+                )}
             </div>
 
             {/* Projects Grid */}
@@ -240,9 +252,11 @@ export default function ProjectsPage() {
                     </div>
                     <h3 className="text-xl font-bold text-base-content">No projects yet</h3>
                     <p className="text-base-content/50 mt-2 max-w-sm mx-auto">Get started by creating your first project to organize tasks and collaborate with your team.</p>
-                    <button onClick={handleOpenCreate} className="btn btn-ghost text-primary mt-4 font-medium hover:bg-primary/10">
-                        Create your first project &rarr;
-                    </button>
+                    {currentUser?.role === 'ADMIN' && (
+                        <button onClick={handleOpenCreate} className="btn btn-ghost text-primary mt-4 font-medium hover:bg-primary/10">
+                            Create your first project &rarr;
+                        </button>
+                    )}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-100">
@@ -262,7 +276,10 @@ export default function ProjectsPage() {
                                     </div>
                                 </div>
 
-                                <h2 className="card-title text-xl text-base-content group-hover:text-primary transition-colors cursor-pointer" onClick={() => handleOpenEdit(project)}>
+                                <h2
+                                    className={`card-title text-xl text-base-content ${currentUser?.role === 'ADMIN' ? 'group-hover:text-primary cursor-pointer' : ''} transition-colors`}
+                                    onClick={() => currentUser?.role === 'ADMIN' && handleOpenEdit(project)}
+                                >
                                     {project.name}
                                 </h2>
                                 <p className="text-sm text-base-content/60 mt-2 line-clamp-2 leading-relaxed min-h-[2.5em]">
@@ -308,26 +325,28 @@ export default function ProjectsPage() {
                                         )}
                                     </div>
 
-                                    <div className="flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleOpenEdit(project); }}
-                                            className="btn btn-ghost btn-xs btn-square tooltip"
-                                            data-tip="Edit"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                            </svg>
-                                        </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }}
-                                            className="btn btn-ghost btn-xs btn-square text-error/70 hover:bg-error/10 hover:text-error tooltip"
-                                            data-tip="Delete"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
-                                    </div>
+                                    {currentUser?.role === 'ADMIN' && (
+                                        <div className="flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleOpenEdit(project); }}
+                                                className="btn btn-ghost btn-xs btn-square tooltip"
+                                                data-tip="Edit"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                </svg>
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }}
+                                                className="btn btn-ghost btn-xs btn-square text-error/70 hover:bg-error/10 hover:text-error tooltip"
+                                                data-tip="Delete"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
