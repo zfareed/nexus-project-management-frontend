@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import api from '@/lib/axios';
+import { TaskCard } from '@/app/components/TaskCard';
 
 
 // --- Types ---
@@ -59,7 +60,6 @@ const UserIcon = () => (
 const FolderIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
 );
-
 const FlagIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" /></svg>
 );
@@ -597,82 +597,15 @@ export default function TasksPage() {
                         {/* Column Area */}
                         <div className="bg-base-100/40 backdrop-blur-sm rounded-2xl p-4 min-h-[500px] flex flex-col gap-4 border border-base-content/5 animate-in slide-in-from-bottom-2 duration-700 fill-mode-backwards" style={{ animationDelay: `${Object.keys(columns).indexOf(status) * 150}ms` }}>
                             {columns[status].map((task, index) => (
-                                <div
+                                <TaskCard
                                     key={task.id}
-                                    className="card bg-gradient-to-br from-base-100 to-base-200/50 shadow-sm border border-base-200/60 hover:shadow-xl hover:border-primary/20 transition-all duration-300 group cursor-pointer hover:-translate-y-1 animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards"
+                                    task={task} // Types should match structure-wise
+                                    currentUser={currentUser}
+                                    onEdit={handleEditClick}
+                                    onDelete={handleDelete}
                                     style={{ animationDelay: `${Object.keys(columns).indexOf(status) * 100 + index * 50}ms` }}
-                                >
-                                    <div className="card-body p-5 gap-3">
-                                        <div className="flex justify-between items-start gap-2">
-                                            <h3
-                                                className={`font-bold text-lg leading-snug cursor-pointer ${currentUser?.role === 'ADMIN' ? 'hover:text-primary' : ''} transition-colors`}
-                                                onClick={() => currentUser?.role === 'ADMIN' && handleEditClick(task.id)}
-                                            >
-                                                {task.title}
-                                            </h3>
-                                            {currentUser?.role === 'ADMIN' && (
-                                                <div className="lg:opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5">
-                                                    <button
-                                                        className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:text-primary"
-                                                        onClick={() => handleEditClick(task.id)}
-                                                        aria-label="Edit Task"
-                                                    >
-                                                        <EditIcon />
-                                                    </button>
-                                                    <button
-                                                        className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:text-error"
-                                                        onClick={() => handleDelete(task.id)}
-                                                        aria-label="Delete Task"
-                                                    >
-                                                        <TrashIcon />
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <p className="text-sm text-base-content/70 line-clamp-3 mb-2">{task.description}</p>
-
-                                        {task.project && (
-                                            <div className="badge badge-outline badge-sm opacity-70 mb-2">{task.project.name}</div>
-                                        )}
-
-                                        <div className="flex items-center justify-between mt-auto pt-2 border-t border-base-200/50">
-                                            <PriorityBadge priority={task.priority} />
-
-                                            {task.assignee && (() => {
-                                                const colors = [
-                                                    'bg-indigo-500 text-white',
-                                                    'bg-purple-500 text-white',
-                                                    'bg-pink-500 text-white',
-                                                    'bg-rose-500 text-white',
-                                                    'bg-orange-500 text-white',
-                                                    'bg-amber-500 text-white',
-                                                    'bg-emerald-500 text-white',
-                                                    'bg-teal-500 text-white',
-                                                    'bg-cyan-500 text-white',
-                                                    'bg-sky-500 text-white',
-                                                    'bg-blue-500 text-white',
-                                                ];
-                                                const hash = task.assignee.name.split('').reduce((acc, char) => char.charCodeAt(0) + acc, 0);
-                                                const colorClass = colors[hash % colors.length];
-
-                                                return (
-                                                    <div className="tooltip tooltip-left" data-tip={`Assigned to ${task.assignee.name}`}>
-                                                        <div className="avatar placeholder">
-                                                            <div className={`w-8 h-8 rounded-full ring-2 ring-base-100 ${colorClass} flex items-center justify-center text-xs font-bold`}>
-                                                                {task.assignee.avatar ? (
-                                                                    <img src={task.assignee.avatar} alt={task.assignee.name} />
-                                                                ) : (
-                                                                    <span>{task.assignee.name.charAt(0).toUpperCase()}</span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })()}
-                                        </div>
-                                    </div>
-                                </div>
+                                    className="animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards"
+                                />
                             ))}
                             {columns[status].length === 0 && (
                                 <div className="flex flex-col items-center justify-center py-16 text-base-content/30 border-2 border-dashed border-base-300/50 rounded-xl">
