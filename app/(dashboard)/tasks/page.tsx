@@ -544,21 +544,23 @@ export default function TasksPage() {
                     </div>
 
                     {/* Assignee Filter */}
-                    <div className="relative w-full sm:w-auto">
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 pointer-events-none z-10">
-                            <UserIcon />
+                    {currentUser?.role === 'ADMIN' && (
+                        <div className="relative w-full sm:w-auto">
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 pointer-events-none z-10">
+                                <UserIcon />
+                            </div>
+                            <select
+                                className="select select-bordered w-full sm:w-[180px] pl-10 focus:select-primary cursor-pointer transition-colors h-12"
+                                value={filterAssigneeId}
+                                onChange={(e) => setFilterAssigneeId(e.target.value)}
+                            >
+                                <option value="ALL">All Assignees</option>
+                                {users.map((user) => (
+                                    <option key={user.id} value={user.id}>{user.name}</option>
+                                ))}
+                            </select>
                         </div>
-                        <select
-                            className="select select-bordered w-full sm:w-[180px] pl-10 focus:select-primary cursor-pointer transition-colors h-12"
-                            value={filterAssigneeId}
-                            onChange={(e) => setFilterAssigneeId(e.target.value)}
-                        >
-                            <option value="ALL">All Assignees</option>
-                            {users.map((user) => (
-                                <option key={user.id} value={user.id}>{user.name}</option>
-                            ))}
-                        </select>
-                    </div>
+                    )}
                 </div>
             </div>
 
