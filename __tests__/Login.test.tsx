@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import LoginPage from '@/app/login/page';
 import api from '@/lib/axios';
 import { useRouter } from 'next/navigation';
@@ -17,13 +18,15 @@ describe('Login Component', () => {
     });
 
     it('shows validation error on empty submit', async () => {
+        const user = userEvent.setup();
         render(<LoginPage />);
-        fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
+        await user.click(screen.getByRole('button', { name: /sign in/i }));
 
         expect(await screen.findByText(/please fill in all fields/i)).toBeInTheDocument();
     });
 
     it('calls login API on valid submit', async () => {
+        const user = userEvent.setup();
         (api.post as jest.Mock).mockResolvedValue({
             data: { token: 'fake-token', user: { id: '1', name: 'Test' } }
         });
@@ -31,10 +34,10 @@ describe('Login Component', () => {
 
         render(<LoginPage />);
 
-        fireEvent.change(screen.getByPlaceholderText(/name@example.com/i), { target: { value: 'test@example.com' } });
-        fireEvent.change(screen.getByPlaceholderText(/enter your password/i), { target: { value: 'password123' } });
+        await user.type(screen.getByPlaceholderText(/name@example.com/i), 'test@example.com');
+        await user.type(screen.getByPlaceholderText(/enter your password/i), 'password123');
 
-        fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
+        await user.click(screen.getByRole('button', { name: /sign in/i }));
 
         await waitFor(() => {
             expect(api.post).toHaveBeenCalledWith('/auth/login', {
