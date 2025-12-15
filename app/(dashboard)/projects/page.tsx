@@ -46,16 +46,23 @@ export default function ProjectsPage() {
 
     const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-    const fetchData = async () => {
+    const fetchData = async (user?: User | null) => {
         setLoading(true);
         try {
-            const [projectsRes, usersRes] = await Promise.all([
-                api.get('/projects'),
-                api.get('/users')
-            ]);
-            setProjects(projectsRes.data);
-            // The users API returns { users: [...], total: ... }
-            setUsers(usersRes.data.users);
+            const promises = [api.get('/projects')];
+
+            // Only fetch users if role is NOT 'USER' (i.e. ADMIN)
+            if (user?.role !== 'USER') {
+                promises.push(api.get('/users'));
+            }
+
+            const results = await Promise.all(promises);
+            setProjects(results[0].data);
+
+            // If we fetched users, set them
+            if (user?.role !== 'USER' && results[1]) {
+                setUsers(results[1].data.users);
+            }
         } catch (error) {
             console.error('Failed to fetch data', error);
         } finally {
@@ -64,15 +71,17 @@ export default function ProjectsPage() {
     };
 
     useEffect(() => {
-        fetchData();
         const storedUser = localStorage.getItem('user');
+        let parsedUser: User | null = null;
         if (storedUser) {
             try {
-                setCurrentUser(JSON.parse(storedUser));
+                parsedUser = JSON.parse(storedUser);
+                setCurrentUser(parsedUser);
             } catch (e) {
                 console.error("Failed to parse user from local storage", e);
             }
         }
+        fetchData(parsedUser);
     }, []);
 
     const resetForm = () => {
@@ -287,7 +296,7 @@ export default function ProjectsPage() {
                                 </p>
 
                                 <div className="mt-6 flex items-center justify-between">
-                                    <div className="flex -space-x-2 overflow-hidden ring-offset-2">
+                                    <div className="flex -space-x-2 ring-offset-2">
                                         {project.assignedUsers.slice(0, 3).map((user) => {
                                             const colors = [
                                                 'bg-indigo-500 text-white',
@@ -326,7 +335,7 @@ export default function ProjectsPage() {
                                     </div>
 
                                     {currentUser?.role === 'ADMIN' && (
-                                        <div className="flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <div className="flex gap-1 opacity-100 transition-opacity duration-300">
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); handleOpenEdit(project); }}
                                                 className="btn btn-ghost btn-xs btn-square tooltip"

@@ -10,7 +10,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const router = useRouter();
 
     const [isAuthChecking, setIsAuthChecking] = React.useState(true);
-    const [user, setUser] = React.useState<{ name: string; email: string; role?: string } | null>(null);
+    const [user, setUser] = React.useState<{ name: string; email: string; role?: string; avatar?: string } | null>(null);
 
     React.useEffect(() => {
         const token = localStorage.getItem('token');
@@ -106,8 +106,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {/* User Profile */}
                     <div className="px-6 py-4 mb-2 flex items-center gap-4 border-b border-white/5 mx-2">
                         <div className="avatar">
-                            <div className="w-12 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                                <img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" alt="Avatar" />
+                            <div className="w-12 h-12 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 flex items-center justify-center bg-white/10 overflow-hidden">
+                                {user?.avatar ? (
+                                    <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white/70">
+                                        <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
+                                    </svg>
+                                )}
                             </div>
                         </div>
                         <div>

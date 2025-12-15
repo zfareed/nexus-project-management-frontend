@@ -314,23 +314,31 @@ export default function TasksPage() {
 
     const [currentUser, setCurrentUser] = useState<{ role: 'ADMIN' | 'USER' } | null>(null);
 
-    const fetchTasks = async () => {
+    const fetchTasks = async (user?: { role: 'ADMIN' | 'USER' } | null) => {
         try {
             setLoading(true);
-            const [tasksRes, usersRes, projectsRes] = await Promise.all([
+            const promises = [
                 api.get('/tasks'),
-                api.get('/users'),
                 api.get('/projects')
-            ]);
+            ];
 
-            // Handle tasks response structure
-            setTasks(tasksRes.data.tasks || []);
+            // Only fetch users if role is NOT 'USER' (i.e. ADMIN)
+            if (user?.role !== 'USER') {
+                promises.push(api.get('/users'));
+            }
 
-            // Handle users response structure
-            setUsers(usersRes.data.users || []);
+            const results = await Promise.all(promises);
 
-            // Handle projects response
-            setProjects(projectsRes.data || []);
+            // Handle tasks response structure (index 0)
+            setTasks(results[0].data.tasks || []);
+
+            // Handle projects response (index 1)
+            setProjects(results[1].data || []);
+
+            // Handle users response structure (index 2 if it exists)
+            if (user?.role !== 'USER' && results[2]) {
+                setUsers(results[2].data.users || []);
+            }
 
         } catch (error) {
             console.error("Failed to fetch data:", error);
@@ -340,15 +348,17 @@ export default function TasksPage() {
     };
 
     useEffect(() => {
-        fetchTasks();
         const storedUser = localStorage.getItem('user');
+        let parsedUser: { role: 'ADMIN' | 'USER' } | null = null;
         if (storedUser) {
             try {
-                setCurrentUser(JSON.parse(storedUser));
+                parsedUser = JSON.parse(storedUser);
+                setCurrentUser(parsedUser);
             } catch (e) {
                 console.error("Failed to parse user from local storage", e);
             }
         }
+        fetchTasks(parsedUser);
     }, []);
 
     const columns = useMemo(() => {
