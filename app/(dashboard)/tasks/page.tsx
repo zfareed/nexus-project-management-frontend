@@ -475,7 +475,7 @@ export default function TasksPage() {
             </div>
 
             {/* Filters & Search */}
-            <div className="flex flex-col xl:flex-row gap-6 mb-10 bg-base-100/70 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-base-200/60 sticky top-4 z-30 animate-in fade-in slide-in-from-top-2 duration-700">
+            <div className="flex flex-col xl:flex-row gap-6 mb-10 bg-base-100/70 backdrop-blur-md rounded-2xl p-4 shadow-sm border border-base-200/60 sticky top-4 z-30 animate-in fade-in slide-in-from-top-2 duration-700">
                 <div className="flex-1">
                     <div className="relative group">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40 group-focus-within:text-primary transition-colors duration-300">
