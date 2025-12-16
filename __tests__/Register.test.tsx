@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import RegisterPage from '@/app/register/page';
 import api from '@/lib/axios';
+import { AuthProvider } from '@/app/context/AuthContext';
 
 describe('Register Component', () => {
     beforeEach(() => {
@@ -9,7 +10,11 @@ describe('Register Component', () => {
     });
 
     it('renders all required fields', () => {
-        render(<RegisterPage />);
+        render(
+            <AuthProvider>
+                <RegisterPage />
+            </AuthProvider>
+        );
         expect(screen.getByPlaceholderText(/john doe/i)).toBeInTheDocument();
         expect(screen.getByPlaceholderText(/name@example.com/i)).toBeInTheDocument();
         // Check for password inputs by name/type as placeholder is duplicate
@@ -18,7 +23,11 @@ describe('Register Component', () => {
     });
 
     it('shows error for invalid input (password mismatch)', async () => {
-        const { container } = render(<RegisterPage />);
+        const { container } = render(
+            <AuthProvider>
+                <RegisterPage />
+            </AuthProvider>
+        );
 
         fireEvent.change(screen.getByPlaceholderText(/john doe/i), { target: { value: 'Test User' } });
         fireEvent.change(screen.getByPlaceholderText(/name@example.com/i), { target: { value: 'test@example.com' } });
@@ -40,7 +49,11 @@ describe('Register Component', () => {
             data: { token: 'fake-token', user: { id: '1', name: 'Test User' } }
         });
 
-        const { container } = render(<RegisterPage />);
+        const { container } = render(
+            <AuthProvider>
+                <RegisterPage />
+            </AuthProvider>
+        );
 
         fireEvent.change(screen.getByPlaceholderText(/john doe/i), { target: { value: 'Test User' } });
         fireEvent.change(screen.getByPlaceholderText(/name@example.com/i), { target: { value: 'test@example.com' } });

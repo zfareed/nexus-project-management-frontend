@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import LoginPage from '@/app/login/page';
 import api from '@/lib/axios';
 import { useRouter } from 'next/navigation';
+import { AuthProvider } from '@/app/context/AuthContext';
 
 describe('Login Component', () => {
     beforeEach(() => {
@@ -11,7 +12,11 @@ describe('Login Component', () => {
     });
 
     it('renders email and password inputs', () => {
-        render(<LoginPage />);
+        render(
+            <AuthProvider>
+                <LoginPage />
+            </AuthProvider>
+        );
         expect(screen.getByPlaceholderText(/name@example.com/i)).toBeInTheDocument();
         expect(screen.getByPlaceholderText(/enter your password/i)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
@@ -19,7 +24,11 @@ describe('Login Component', () => {
 
     it('shows validation error on empty submit', async () => {
         const user = userEvent.setup();
-        render(<LoginPage />);
+        render(
+            <AuthProvider>
+                <LoginPage />
+            </AuthProvider>
+        );
         await user.click(screen.getByRole('button', { name: /sign in/i }));
 
         expect(await screen.findByText(/please fill in all fields/i)).toBeInTheDocument();
@@ -32,7 +41,11 @@ describe('Login Component', () => {
         });
         // useRouter mocked in setup
 
-        render(<LoginPage />);
+        render(
+            <AuthProvider>
+                <LoginPage />
+            </AuthProvider>
+        );
 
         await user.type(screen.getByPlaceholderText(/name@example.com/i), 'test@example.com');
         await user.type(screen.getByPlaceholderText(/enter your password/i), 'password123');
