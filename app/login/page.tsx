@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { authService } from '@/services/auth.service';
+import { useAuth } from '@/app/context/AuthContext';
 
 export default function LoginPage() {
-    const router = useRouter();
+
+    const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -23,17 +23,11 @@ export default function LoginPage() {
         setIsLoading(true);
 
         try {
-            const data = await authService.login({
+            await login({
                 email,
                 password,
             });
-
-            // Store token and user data
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-
-            // Redirect to dashboard
-            router.push('/');
+            // Redirect is handled in context
         } catch (err: any) {
             const errorMessage = err.response?.data?.message || err.message || 'Something went wrong. Please try again.';
             setError(errorMessage);

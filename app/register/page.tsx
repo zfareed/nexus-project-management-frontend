@@ -2,17 +2,17 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { authService } from '@/services/auth.service';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/app/context/AuthContext';
 
 export default function RegisterPage() {
-    const router = useRouter();
+    const { register } = useAuth();
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
         password: '',
         confirmPassword: '',
     });
+
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -51,22 +51,14 @@ export default function RegisterPage() {
         }
 
         try {
-            const data = await authService.register({
+            await register({
                 name: formData.fullName,
                 email: formData.email,
                 password: formData.password,
             });
 
-            setSuccess('Account created successfully! Redirecting...');
-
-            // Store token and user data
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-
-            // Redirect after success
-            setTimeout(() => {
-                router.push('/');
-            }, 1000);
+            setSuccess('Account created successfully!');
+            // Redirect is handled in context
         } catch (err: any) {
             console.error('Registration error:', err);
             const errorMessage = err.response?.data?.message || err.message || 'Failed to create account. Please try again.';

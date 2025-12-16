@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import DashboardHome from '@/app/(dashboard)/page'; // Make sure import path matches default export
+import DashboardHome from '@/app/(dashboard)/page';
 import api from '@/lib/axios';
 
 describe('Dashboard Component', () => {
