@@ -14,7 +14,7 @@ import {
     Pie,
     Legend
 } from 'recharts';
-import api from '@/lib/axios';
+import { dashboardService } from '@/services/dashboard.service';
 
 
 
@@ -25,8 +25,8 @@ export default function DashboardHome() {
     React.useEffect(() => {
         const fetchStats = async () => {
             try {
-                const response = await api.get('/dashboard/stats');
-                setStats(response.data);
+                const data = await dashboardService.getStats();
+                setStats(data);
             } catch (error) {
                 console.error('Failed to fetch dashboard stats', error);
             } finally {

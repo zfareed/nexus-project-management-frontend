@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import api from '@/lib/axios';
+import { authService } from '@/services/auth.service';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     const handleLogout = async () => {
         try {
-            await api.post('/auth/logout');
+            await authService.logout();
         } catch (error) {
             console.error('Logout failed', error);
         } finally {

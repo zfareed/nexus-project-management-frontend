@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import api from '@/lib/axios';
+import { projectService } from '@/services/project.service';
+import { userService } from '@/services/user.service';
 import { ProjectList } from '@/app/components/ProjectList';
 
 // Types based on API Response
@@ -50,19 +51,19 @@ export default function ProjectsPage() {
     const fetchData = async (user?: User | null) => {
         setLoading(true);
         try {
-            const promises = [api.get('/projects')];
+            const promises: Promise<any>[] = [projectService.getProjects()];
 
             // Only fetch users if role is NOT 'USER' (i.e. ADMIN)
             if (user?.role !== 'USER') {
-                promises.push(api.get('/users'));
+                promises.push(userService.getUsers());
             }
 
             const results = await Promise.all(promises);
-            setProjects(results[0].data);
+            setProjects(results[0]);
 
             // If we fetched users, set them
             if (user?.role !== 'USER' && results[1]) {
-                setUsers(results[1].data.users);
+                setUsers(results[1].users);
             }
         } catch (error) {
             console.error('Failed to fetch data', error);
@@ -105,8 +106,7 @@ export default function ProjectsPage() {
         setCurrentProject(project);
 
         try {
-            const response = await api.get(`/projects/${project.id}`);
-            const fullProject = response.data;
+            const fullProject = await projectService.getProject(project.id);
             setCurrentProject(fullProject);
             setFormData({
                 name: fullProject.name,
@@ -135,14 +135,14 @@ export default function ProjectsPage() {
         if (!formData.name) return;
 
         try {
-            const response = await api.post('/projects', {
+            const newProject = await projectService.createProject({
                 name: formData.name,
                 description: formData.description,
                 userIds: formData.userIds
             });
 
             // Optimistically add to list or fetch again
-            setProjects([response.data, ...projects]);
+            setProjects([newProject, ...projects]);
             setIsCreateOpen(false);
             resetForm();
         } catch (error) {
@@ -158,14 +158,14 @@ export default function ProjectsPage() {
         if (!currentProject) return;
 
         try {
-            const response = await api.put(`/projects/${currentProject.id}`, {
+            const updatedProject = await projectService.updateProject(currentProject.id, {
                 name: formData.name,
                 description: formData.description,
                 userIds: formData.userIds
             });
 
             // Update local state
-            setProjects(projects.map(p => p.id === currentProject.id ? response.data : p));
+            setProjects(projects.map(p => p.id === currentProject.id ? updatedProject : p));
             setIsEditOpen(false);
             resetForm();
         } catch (error) {
@@ -189,7 +189,7 @@ export default function ProjectsPage() {
         if (!deleteId) return;
 
         try {
-            await api.delete(`/projects/${deleteId}`);
+            await projectService.deleteProject(deleteId);
             setProjects(projects.filter(p => p.id !== deleteId));
             setDeleteId(null);
         } catch (error) {

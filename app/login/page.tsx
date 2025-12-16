@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import api from '@/lib/axios';
+import { authService } from '@/services/auth.service';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -23,12 +23,10 @@ export default function LoginPage() {
         setIsLoading(true);
 
         try {
-            const response = await api.post('/auth/login', {
+            const data = await authService.login({
                 email,
                 password,
             });
-
-            const data = response.data;
 
             // Store token and user data
             localStorage.setItem('token', data.token);

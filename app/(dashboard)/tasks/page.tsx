@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import api from '@/lib/axios';
+import { taskService } from '@/services/task.service';
+import { projectService } from '@/services/project.service';
+import { userService } from '@/services/user.service';
 import { TaskCard } from '@/app/components/TaskCard';
 
 
@@ -317,27 +319,27 @@ export default function TasksPage() {
     const fetchTasks = async (user?: { role: 'ADMIN' | 'USER' } | null) => {
         try {
             setLoading(true);
-            const promises = [
-                api.get('/tasks'),
-                api.get('/projects')
+            const promises: Promise<any>[] = [
+                taskService.getTasks(),
+                projectService.getProjects()
             ];
 
             // Only fetch users if role is NOT 'USER' (i.e. ADMIN)
             if (user?.role !== 'USER') {
-                promises.push(api.get('/users'));
+                promises.push(userService.getUsers());
             }
 
             const results = await Promise.all(promises);
 
             // Handle tasks response structure (index 0)
-            setTasks(results[0].data.tasks || []);
+            setTasks(results[0].tasks || []);
 
             // Handle projects response (index 1)
-            setProjects(results[1].data || []);
+            setProjects(results[1] || []);
 
             // Handle users response structure (index 2 if it exists)
             if (user?.role !== 'USER' && results[2]) {
-                setUsers(results[2].data.users || []);
+                setUsers(results[2].users || []);
             }
 
         } catch (error) {
@@ -401,17 +403,17 @@ export default function TasksPage() {
     const handleCreate = async (newTaskData: Partial<Task>) => {
         try {
             const payload = {
-                title: newTaskData.title,
+                title: newTaskData.title || '',
                 description: newTaskData.description,
-                status: newTaskData.status,
-                priority: newTaskData.priority,
+                status: newTaskData.status || 'TODO', // Default status if undefined
+                priority: newTaskData.priority || 'MEDIUM', // Default priority if undefined
                 dueDate: newTaskData.dueDate || null,
-                projectId: newTaskData.projectId,
-                assigneeId: newTaskData.assigneeId
+                projectId: newTaskData.projectId || '',
+                assigneeId: newTaskData.assigneeId || ''
             };
 
-            const response = await api.post('/tasks', payload);
-            const createdTask = response.data.task;
+            const data = await taskService.createTask(payload);
+            const createdTask = data.task;
 
             setTasks((prev) => [...prev, createdTask]);
             setIsCreateOpen(false);
@@ -434,8 +436,8 @@ export default function TasksPage() {
                 assigneeId: updatedTaskData.assigneeId
             };
 
-            const response = await api.put(`/tasks/${editingTask.id}`, payload);
-            const updatedTask = response.data.task;
+            const data = await taskService.updateTask(editingTask.id, payload);
+            const updatedTask = data.task;
 
             setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
             setEditingTask(null);
@@ -446,8 +448,8 @@ export default function TasksPage() {
 
     const handleEditClick = async (taskId: string) => {
         try {
-            const response = await api.get(`/tasks/${taskId}`);
-            setEditingTask(response.data.task);
+            const data = await taskService.getTask(taskId);
+            setEditingTask(data.task);
         } catch (error) {
             console.error("Failed to fetch task details", error);
         }
@@ -461,7 +463,7 @@ export default function TasksPage() {
         if (!taskToDelete) return;
 
         try {
-            await api.delete(`/tasks/${taskToDelete}`);
+            await taskService.deleteTask(taskToDelete);
             setTasks(tasks.filter(t => t.id !== taskToDelete));
             setTaskToDelete(null);
         } catch (error) {

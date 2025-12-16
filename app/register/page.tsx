@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import api from '@/lib/axios';
+import { authService } from '@/services/auth.service';
 import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
@@ -51,13 +51,11 @@ export default function RegisterPage() {
         }
 
         try {
-            const response = await api.post('/auth/register', {
+            const data = await authService.register({
                 name: formData.fullName,
                 email: formData.email,
                 password: formData.password,
             });
-
-            const data = response.data;
 
             setSuccess('Account created successfully! Redirecting...');
 
